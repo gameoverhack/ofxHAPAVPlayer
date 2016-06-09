@@ -6,7 +6,6 @@
 .project
 .metadata
 .gradle
-bin/
 tmp/
 target/
 *.tmp
