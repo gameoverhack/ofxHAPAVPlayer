@@ -13,43 +13,11 @@
 
 - (id) init	{
 	self = [super init];
-//	if (self!=nil)	{
-//		displayLink = NULL;
-//    }
     player = [[AVPlayer alloc] init];
     [player setActionAtItemEnd:AVPlayerActionAtItemEndPause];
     [player play];
-    
-//    //	make the displaylink, which will drive rendering
-//    CVReturn				err = kCVReturnSuccess;
-//    CGOpenGLDisplayMask		totalDisplayMask = 0;
-//    GLint					virtualScreen = 0;
-//    GLint					displayMask = 0;
-//    NSOpenGLPixelFormat		*format = [self createGLPixelFormat];
-//    
-//    for (virtualScreen=0; virtualScreen<[format numberOfVirtualScreens]; ++virtualScreen)	{
-//        [format getValues:&displayMask forAttribute:NSOpenGLPFAScreenMask forVirtualScreen:virtualScreen];
-//        totalDisplayMask |= displayMask;
-//    }
-//    err = CVDisplayLinkCreateWithOpenGLDisplayMask(totalDisplayMask, &displayLink);
-//    if (err)	{
-//        NSLog(@"\t\terr %d creating display link in %s",err,__func__);
-//        displayLink = NULL;
-//        return FALSE;
-//    }
-//    else	{
-//        CVDisplayLinkSetOutputCallback(displayLink, displayLinkCallback, self);
-//        CVDisplayLinkStart(displayLink);
-//    }
 	return self;
 }
-
-//- (void) renderCallback	{
-//    
-//    @synchronized (self){
-//
-//    }
-//}
 
 - (void) load:(NSString *)path{
     
@@ -167,24 +135,6 @@
     }
 }
 
-//- (NSOpenGLPixelFormat *) createGLPixelFormat	{
-//	GLuint				glDisplayMaskForAllScreens = 0;
-//	CGDirectDisplayID	dspys[10];
-//	CGDisplayCount		count = 0;
-//	if (CGGetActiveDisplayList(10,dspys,&count)==kCGErrorSuccess)	{
-//		for (int i=0; i<count; ++i)
-//			glDisplayMaskForAllScreens |= CGDisplayIDToOpenGLDisplayMask(dspys[i]);
-//	}
-//	
-//	NSOpenGLPixelFormatAttribute	attrs[] = {
-//		NSOpenGLPFAAccelerated,
-//		NSOpenGLPFAScreenMask,glDisplayMaskForAllScreens,
-//		NSOpenGLPFANoRecovery,
-//		NSOpenGLPFAAllowOfflineRenderers,
-//		0};
-//	return [[[NSOpenGLPixelFormat alloc] initWithAttributes:attrs] autorelease];
-//}
-
 - (NSInteger) getWidth{
     return videoWidth;
 }
@@ -210,20 +160,3 @@
 }
 
 @end
-
-//CVReturn displayLinkCallback(CVDisplayLinkRef displayLink,
-//                             const CVTimeStamp *inNow,
-//                             const CVTimeStamp *inOutputTime,
-//                             CVOptionFlags flagsIn,
-//                             CVOptionFlags *flagsOut,
-//                             void *displayLinkContext)
-//{
-//	NSAutoreleasePool		*pool =[[NSAutoreleasePool alloc] init];
-//	[(ofxHAPAVPlayerDelegate *)displayLinkContext renderCallback];
-//	[pool release];
-//	return kCVReturnSuccess;
-//}
-//void pixelBufferReleaseCallback(void *releaseRefCon, const void *baseAddress)	{
-////	HapDecoderFrame		*decoderFrame = (HapDecoderFrame *)releaseRefCon;
-////	[decoderFrame release];
-//}

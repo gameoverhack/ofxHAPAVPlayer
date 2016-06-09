@@ -12,7 +12,6 @@
 #import <HapInAVFoundation/HapInAVFoundation.h>
 
 @interface ofxHAPAVPlayerDelegate : NSObject {
-//	CVDisplayLinkRef			displayLink;
     AVPlayer                    *player;
 	AVPlayerItem				*playerItem;
     AVPlayerItemVideoOutput		*nativeAVFOutput;
@@ -37,6 +36,3 @@
 - (CVOpenGLTextureRef) getTextureRef;
 
 @end
-
-//CVReturn displayLinkCallback(CVDisplayLinkRef displayLink, const CVTimeStamp *inNow, const CVTimeStamp *inOutputTime, CVOptionFlags flagsIn, CVOptionFlags *flagsOut, void *displayLinkContext);
-//void pixelBufferReleaseCallback(void *releaseRefCon, const void *baseAddress);
