@@ -31,24 +31,77 @@ public:
     ofxHAPAVPlayer();
     virtual ~ofxHAPAVPlayer();
     
-    virtual void load(string path);
-    
+    void load(string name);
+    //void loadAsync(string name);
+    void close();
     void update();
+    
     void draw();
+    void draw(float x, float y);
+    void draw(const ofRectangle & rect);
+    void draw(float x, float y, float w, float h);
+    
+    bool setPixelFormat(ofPixelFormat pixelFormat);
+    ofPixelFormat getPixelFormat() const;
+    
+    void play();
+    void stop();
+    
+    bool isFrameNew() const;
+    const ofPixels & getPixels() const;
+    ofPixels & getPixels();
+    ofTexture * getTexturePtr();
+    
+    float getWidth() const;
+    float getHeight() const;
+    
+    bool isPaused() const;
+    bool isLoaded() const;
+    bool isPlaying() const;
+    
+    float getPosition() const;
+    float getVolume() const;
+    float getSpeed() const;
+    float getDuration() const;
+    bool getIsMovieDone() const;
+    
+    void setPaused(bool bPause);
+    void setPosition(float pct);
+    void setVolume(float volume);
+    void setLoopState(ofLoopType state);
+    void setSpeed(float speed);
+    void setFrame(int frame);
+    
+    int	getCurrentFrame() const;
+    int	getTotalNumFrames() const;
+    ofLoopType getLoopState() const;
+    
+    void firstFrame();
+    void nextFrame();
+    void previousFrame();
+    
+    ofxHAPAVPlayer& operator=(ofxHAPAVPlayer other);
     
 protected:
     
+    
+    bool bFrameNew;
+    bool bNeedsShader;
+    
+    ofPixels pixels;
+    ofPixelFormat pixelFormat;
+    //ofTexture videoTexture;
+
+    ofTexture videoTextures[2];
+    GLenum internalFormats[2];
+    
     ofShader shader;
     
-    bool bNeedsShader;
-    GLenum internalFormats[2];
-    ofTexture videoTextures[2];
-    
 #ifdef __OBJC__
+    CMTime frameTime;
     ofxHAPAVPlayerDelegate      *delegate;
 #endif
     
-    bool bIsSetup;
 };
 
 #endif

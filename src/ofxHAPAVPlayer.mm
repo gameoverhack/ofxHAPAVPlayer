@@ -30,6 +30,7 @@ vec4 rgba = vec4(Y + Co - Cg, Y + Cg, Y - Co - Cg, 1.0);\
 gl_FragColor = rgba;\
 }";
 
+//--------------------------------------------------------------
 ofxHAPAVPlayer::ofxHAPAVPlayer(){
     delegate = [[ofxHAPAVPlayerDelegate alloc] init];
     for (int i=0; i<2; ++i)	{
@@ -41,20 +42,76 @@ ofxHAPAVPlayer::ofxHAPAVPlayer(){
     bNeedsShader = false;
 }
 
+//--------------------------------------------------------------
 ofxHAPAVPlayer::~ofxHAPAVPlayer(){
-    
+    close();
 }
 
+//--------------------------------------------------------------
+void ofxHAPAVPlayer::close(){
+    if(delegate == nil) return;
+    [delegate close];
+}
+
+//--------------------------------------------------------------
 void ofxHAPAVPlayer::load(string path){
-    
+    bFrameNew = false;
     NSString *nsPath = [NSString stringWithCString:path.c_str() encoding:[NSString defaultCStringEncoding]];
-
-    dispatch_async(dispatch_get_main_queue(), ^{
-        [delegate load:nsPath];
-    });
-    
+    [delegate load:nsPath];
 }
 
+//--------------------------------------------------------------
+int	ofxHAPAVPlayer::getCurrentFrame() const{
+    return CMTimeGetSeconds(frameTime) * [delegate getFrameRate];
+}
+
+//--------------------------------------------------------------
+int	ofxHAPAVPlayer::getTotalNumFrames() const{
+    return CMTimeGetSeconds([delegate getDuration]) * [delegate getFrameRate];
+}
+
+//--------------------------------------------------------------
+bool ofxHAPAVPlayer::isFrameNew() const{
+    return bFrameNew;
+}
+
+//--------------------------------------------------------------
+void ofxHAPAVPlayer::play(){
+    if(delegate == nil) return;
+    [delegate play];
+}
+
+//--------------------------------------------------------------
+void ofxHAPAVPlayer::stop(){
+    if(delegate == nil) return;
+    [delegate stop];
+}
+
+//--------------------------------------------------------------
+void ofxHAPAVPlayer::setSpeed(float speed){
+    if(delegate == nil) return;
+    [delegate setSpeed:speed];
+}
+
+//--------------------------------------------------------------
+void ofxHAPAVPlayer::setPaused(bool bPause){
+    if(delegate == nil) return;
+    [delegate setPaused:bPause];
+}
+
+//--------------------------------------------------------------
+float ofxHAPAVPlayer::getWidth() const{
+    if(delegate == nil) return 0;
+    return [delegate getWidth];
+}
+
+//--------------------------------------------------------------
+float ofxHAPAVPlayer::getHeight() const{
+    if(delegate == nil) return 0;
+    return [delegate getHeight];
+}
+
+//--------------------------------------------------------------
 void ofxHAPAVPlayer::update(){
 
     if(delegate == nil) return;
@@ -66,33 +123,41 @@ void ofxHAPAVPlayer::update(){
     AVPlayerItemHapDXTOutput* hapOutput = [delegate getHAPOutput];
     if(hapOutput == nil) return;
     
-    HapDecoderFrame			*dxtFrame = [hapOutput allocFrameClosestToTime:[hapOutput itemTimeForMachAbsoluteTime:mach_absolute_time()]];
-    if (dxtFrame!=nil)	{
+    //[[delegate getPlayer] currentTime];
+    frameTime = [hapOutput itemTimeForMachAbsoluteTime:mach_absolute_time()];
+    //cout << [[delegate getPlayer] rate] << " : " << frameTime.value << " == " << [[delegate getPlayer] currentTime].value << endl;
+    HapDecoderFrame	*dxtFrame = [hapOutput allocFrameClosestToTime:frameTime];
+    
+    bFrameNew = false;
+    
+    if (dxtFrame != nil) {
+        
+        bFrameNew = true;
         
         BOOL valid = false;
         
-        NSSize			tmpSize = [dxtFrame imgSize];
+        NSSize tmpSize = [dxtFrame imgSize];
         int width = tmpSize.width;
         int height = tmpSize.height;
         
         tmpSize = [dxtFrame dxtImgSize];
-        GLuint			roundedWidth = tmpSize.width;
-        GLuint			roundedHeight = tmpSize.height;
+        GLuint roundedWidth = tmpSize.width;
+        GLuint roundedHeight = tmpSize.height;
         if (roundedWidth % 4 != 0 || roundedHeight % 4 != 0)	{
             NSLog(@"\t\terr: width isn't a multiple of 4, bailing. %s",__func__);
             return;
         }
         
         int textureCount = [dxtFrame dxtPlaneCount];
-        OSType			*dxtPixelFormats = [dxtFrame dxtPixelFormats];
-        GLenum			newInternalFormat;
-        size_t			*dxtDataSizes = [dxtFrame dxtDataSizes];
-        void			**dxtBaseAddresses = [dxtFrame dxtDatas];
+        OSType *dxtPixelFormats = [dxtFrame dxtPixelFormats];
+        GLenum newInternalFormat;
+        size_t *dxtDataSizes = [dxtFrame dxtDataSizes];
+        void **dxtBaseAddresses = [dxtFrame dxtDatas];
         
         bNeedsShader = false;
         
         for (int texIndex=0; texIndex<textureCount; ++texIndex)	{
-            unsigned int	bitsPerPixel = 0;
+            unsigned int bitsPerPixel = 0;
             switch (dxtPixelFormats[texIndex]) {
                 case kHapCVPixelFormat_RGB_DXT1:
                     newInternalFormat = HapTextureFormat_RGB_DXT1;
@@ -226,9 +291,12 @@ void ofxHAPAVPlayer::update(){
     if(nativeAVFOutput == nil) return;
     
     //	try to get a CV pixel buffer (returns immediately if we're not using the native AVF output side of things)
-    CMTime					frameTime = [nativeAVFOutput itemTimeForMachAbsoluteTime:mach_absolute_time()];
-    if (nativeAVFOutput!=nil && [nativeAVFOutput hasNewPixelBufferForItemTime:frameTime])	{
-        CMTime					frameDisplayTime = kCMTimeZero;
+    frameTime = [nativeAVFOutput itemTimeForMachAbsoluteTime:mach_absolute_time()];
+    if (nativeAVFOutput != nil && [nativeAVFOutput hasNewPixelBufferForItemTime:frameTime]){
+        
+        bFrameNew = true;
+        
+        CMTime frameDisplayTime = kCMTimeZero;
         CVImageBufferRef imageBuffer = [nativeAVFOutput copyPixelBufferForItemTime:frameTime itemTimeForDisplay:&frameDisplayTime];
         if(imageBuffer == nil) {
             return;
@@ -285,6 +353,7 @@ void ofxHAPAVPlayer::update(){
     }
 }
 
+//--------------------------------------------------------------
 void ofxHAPAVPlayer::draw(){
     if(delegate == nil) return;
     if(bNeedsShader) shader.begin();

@@ -7,6 +7,7 @@ void ofApp::setup(){
     dir.listDir(ofToDataPath(""));
     currentFileIndex = 0;
     vid.load(dir.getPath(currentFileIndex));
+    vid.play();
 }
 
 //--------------------------------------------------------------
@@ -17,18 +18,73 @@ void ofApp::update(){
 //--------------------------------------------------------------
 void ofApp::draw(){
     vid.draw();
+    ostringstream os;
+    os << "FPS: " << ofGetFrameRate() << endl;
+    os << "Frame/Duration: " << vid.getCurrentFrame() << " / " << vid.getTotalNumFrames() << endl;
+    os << "Press ' ' (SpaceBar) to load movies at random" << endl;
+    ofDrawBitmapString(os.str(), 20, ofGetHeight() - 50);
 }
 
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key){
-    currentFileIndex++;
-    if(currentFileIndex == dir.size()) currentFileIndex = 0;
-    vid.load(dir.getPath(currentFileIndex));
+    
 }
 
 //--------------------------------------------------------------
 void ofApp::keyReleased(int key){
-
+    switch (key) {
+        case ' ':
+        {
+            currentFileIndex++;
+            if(currentFileIndex == dir.size()) currentFileIndex = 0;
+            vid.load(dir.getPath(currentFileIndex));
+            vid.play();
+        }
+            break;
+        case 'p':
+        {
+            vid.play();
+        }
+            break;
+        case 's':
+        {
+            vid.stop();
+        }
+            break;
+        case 'b':
+        {
+            cout << "here" << endl;
+            vid.setPaused(true);
+        }
+            break;
+        case 'n':
+        {
+            vid.setPaused(false);
+        }
+            break;
+        case '1':
+        {
+            vid.setSpeed(+1.0);
+        }
+            break;
+        case '2':
+        {
+            vid.setSpeed(+2.0);
+        }
+            break;
+        case '3':
+        {
+            vid.setSpeed(-1.0);
+        }
+            break;
+        case '4':
+        {
+            vid.setSpeed(-2.0);
+        }
+            break;
+        default:
+            break;
+    }
 }
 
 //--------------------------------------------------------------
