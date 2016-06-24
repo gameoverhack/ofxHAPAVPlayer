@@ -84,6 +84,7 @@ public:
     
 protected:
     
+    int currentFrame;
     
     bool bFrameNew;
     bool bNeedsShader;
@@ -98,7 +99,6 @@ protected:
     ofShader shader;
     
 #ifdef __OBJC__
-    CMTime frameTime;
     ofxHAPAVPlayerDelegate      *delegate;
 #endif
     

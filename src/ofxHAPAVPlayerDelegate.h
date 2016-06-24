@@ -39,8 +39,10 @@
 - (void) load:(NSString *)path;
 
 - (void) play;
-- (void) setPaused:(BOOL)b;
-- (void) setSpeed:(float)s;
+- (void) setPaused:(BOOL)bPaused;
+- (void) setSpeed:(float)speed;
+- (void)setPosition:(float)position;
+- (void) setFrame:(int)frame;
 - (void) stop;
 - (void) close;
 

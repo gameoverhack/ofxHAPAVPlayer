@@ -62,16 +62,19 @@ void ofxHAPAVPlayer::load(string path){
 
 //--------------------------------------------------------------
 int	ofxHAPAVPlayer::getCurrentFrame() const{
-    return CMTimeGetSeconds(frameTime) * [delegate getFrameRate];
+    if(delegate == nil) 0;
+    return currentFrame;
 }
 
 //--------------------------------------------------------------
 int	ofxHAPAVPlayer::getTotalNumFrames() const{
+    if(delegate == nil) 0;
     return CMTimeGetSeconds([delegate getDuration]) * [delegate getFrameRate];
 }
 
 //--------------------------------------------------------------
 bool ofxHAPAVPlayer::isFrameNew() const{
+    if(delegate == nil) false;
     return bFrameNew;
 }
 
@@ -100,6 +103,18 @@ void ofxHAPAVPlayer::setPaused(bool bPause){
 }
 
 //--------------------------------------------------------------
+void ofxHAPAVPlayer::setFrame(int frame){
+    if(delegate == nil) return;
+    [delegate setFrame:frame];
+}
+
+//--------------------------------------------------------------
+void ofxHAPAVPlayer::setPosition(float pct){
+    if(delegate == nil) return;
+    [delegate setPosition:pct];
+}
+
+//--------------------------------------------------------------
 float ofxHAPAVPlayer::getWidth() const{
     if(delegate == nil) return 0;
     return [delegate getWidth];
@@ -123,6 +138,8 @@ void ofxHAPAVPlayer::update(){
     AVPlayerItemHapDXTOutput* hapOutput = [delegate getHAPOutput];
     if(hapOutput == nil) return;
     
+    CMTime frameTime;
+    
     //[[delegate getPlayer] currentTime];
     frameTime = [hapOutput itemTimeForMachAbsoluteTime:mach_absolute_time()];
     //cout << [[delegate getPlayer] rate] << " : " << frameTime.value << " == " << [[delegate getPlayer] currentTime].value << endl;
@@ -133,6 +150,7 @@ void ofxHAPAVPlayer::update(){
     if (dxtFrame != nil) {
         
         bFrameNew = true;
+        currentFrame = CMTimeGetSeconds(frameTime) * [delegate getFrameRate];
         
         BOOL valid = false;
         
@@ -187,8 +205,7 @@ void ofxHAPAVPlayer::update(){
                     if (texIndex==0)	{
                         newInternalFormat = HapTextureFormat_RGBA_DXT5;
                         bitsPerPixel = 8;
-                    }
-                    else	{
+                    }else{
                         newInternalFormat = HapTextureFormat_A_RGTC1;
                         bitsPerPixel = 4;
                     }
@@ -291,10 +308,13 @@ void ofxHAPAVPlayer::update(){
     if(nativeAVFOutput == nil) return;
     
     //	try to get a CV pixel buffer (returns immediately if we're not using the native AVF output side of things)
+    
     frameTime = [nativeAVFOutput itemTimeForMachAbsoluteTime:mach_absolute_time()];
+    
     if (nativeAVFOutput != nil && [nativeAVFOutput hasNewPixelBufferForItemTime:frameTime]){
         
         bFrameNew = true;
+        currentFrame = CMTimeGetSeconds(frameTime) * [delegate getFrameRate];
         
         CMTime frameDisplayTime = kCMTimeZero;
         CVImageBufferRef imageBuffer = [nativeAVFOutput copyPixelBufferForItemTime:frameTime itemTimeForDisplay:&frameDisplayTime];

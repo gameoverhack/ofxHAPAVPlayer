@@ -39,7 +39,11 @@ void ofApp::keyReleased(int key){
             if(currentFileIndex == dir.size()) currentFileIndex = 0;
             vid.load(dir.getPath(currentFileIndex));
             vid.play();
+            vid.setFrame(15);
         }
+            break;
+        case 't':
+            vid.setFrame(15);
             break;
         case 'p':
         {

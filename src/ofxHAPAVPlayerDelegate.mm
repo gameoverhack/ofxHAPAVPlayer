@@ -202,12 +202,6 @@ static const void *PlayerRateContext = &ItemStatusContext;
                 }
                 
                 
-                
-                
-                
-                
-                
-                
                 NSNotificationCenter *nc = [NSNotificationCenter defaultCenter];
                 if (self.playerItem != nil){
                     //	unregister as an observer for the "old" item's play-to-end notifications
@@ -216,9 +210,6 @@ static const void *PlayerRateContext = &ItemStatusContext;
                     [nc addObserver:self selector:@selector(itemDidPlayToEnd:) name:AVPlayerItemDidPlayToEndTimeNotification object:self.playerItem];
                 }
 
-                
-               
-                
                 
 //                if(_player != nil) {
 ////                    [self removeTimeObserverFromPlayer];
@@ -297,10 +288,10 @@ static const void *PlayerRateContext = &ItemStatusContext;
     }
 }
 
-- (void) setPaused:(BOOL)b{
+- (void) setPaused:(BOOL)bPaused{
     //dispatch_sync(dispatch_get_main_queue(), ^{
         @synchronized (self){
-            if(b){
+            if(bPaused){
                 [self.player setRate:0.0f];
             }else{
                 [self.player setRate:rate];
@@ -310,10 +301,25 @@ static const void *PlayerRateContext = &ItemStatusContext;
     
 }
 
-- (void) setSpeed:(float)s{
+- (void) setSpeed:(float)speed{
     @synchronized (self){
-        rate = s;
+        rate = speed;
         [self.player setRate:rate];
+    }
+}
+
+- (void)setPosition:(float)position {
+    if(bReady){
+        double time = CMTimeGetSeconds(duration) * position;
+        [self.player seekToTime:CMTimeMakeWithSeconds(time, NSEC_PER_SEC)];
+    }
+}
+
+- (void)setFrame:(int)frame {
+    if(bReady){
+        float position = (float)frame / ((float)CMTimeGetSeconds(duration) * frameRate);
+        NSLog(@"frame - position: %d %f", frame, position);
+        [self setPosition:position];
     }
 }
 
