@@ -6,6 +6,7 @@
 class ofApp : public ofBaseApp{
 
 public:
+    
     void setup();
     void update();
     void draw();
@@ -25,6 +26,10 @@ public:
     int currentFileIndex;
     ofDirectory dir;
     
+    int maxPlayers;
+    int lastTime;
+    bool bRandomize;
+    vector<ofxHAPAVPlayer> videos;
     ofxHAPAVPlayer vid;
 		
 };

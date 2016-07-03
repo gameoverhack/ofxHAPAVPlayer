@@ -8,6 +8,23 @@
 
 #include "ofxHAPAVPlayerDelegate.h"
 #include <mach/mach_time.h>
+#import <QuartzCore/QuartzCore.h>
+
+uint64_t getTickCount(void)
+{
+    static mach_timebase_info_data_t sTimebaseInfo;
+    uint64_t machTime = mach_absolute_time();
+    
+    // Convert to nanoseconds - if this is the first time we've run, get the timebase.
+    if (sTimebaseInfo.denom == 0 )
+    {
+        (void) mach_timebase_info(&sTimebaseInfo);
+    }
+    
+    // Convert the mach time to milliseconds
+    uint64_t millis = ((machTime / 1000000) * sTimebaseInfo.numer) / sTimebaseInfo.denom;
+    return millis;
+}
 
 @implementation ofxHAPAVPlayerDelegate
 
@@ -21,20 +38,34 @@ static const void *PlayerRateContext = &ItemStatusContext;
 @synthesize asset = _asset;
 @synthesize player = _player;
 @synthesize playerItem = _playerItem;
+@synthesize duration = _duration;
 
+@synthesize nativeAVFOutput = _nativeAVFOutput;
+@synthesize hapOutput = _hapOutput;
+
+//@synthesize useTexture = _useTexture;
+//@synthesize useAlpha = _useAlpha;
+
+@synthesize bLoaded = _bLoaded;
+
+
+@synthesize rate = _rate;
 
 
 - (id) init	{
 	self = [super init];
     self.player = [[AVPlayer alloc] init];
+    [self.player autorelease];
     [self.player setActionAtItemEnd:AVPlayerActionAtItemEndPause];
-    rate = 1.0;
+    _rate = 1.0;
 	return self;
 }
 
 - (void) load:(NSString *)path{
     
-    NSLog(@"%s %@",__func__,path);
+    _bLoaded = false;
+    
+    //NSLog(@"%s %@",__func__,path);
     
 	//	make url
 	NSURL *url = (path==nil) ? nil : [NSURL fileURLWithPath:path];
@@ -62,9 +93,12 @@ static const void *PlayerRateContext = &ItemStatusContext;
         queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
     }
     
+    
     // dispatch the queue
     dispatch_async(queue, ^{
         [asset loadValuesAsynchronouslyForKeys:[NSArray arrayWithObject:kTracksKey] completionHandler:^{
+            
+            double startTime = getTickCount();
             
             NSError * error = nil;
             AVKeyValueStatus status = [asset statusOfValueForKey:kTracksKey error:&error];
@@ -72,8 +106,8 @@ static const void *PlayerRateContext = &ItemStatusContext;
             if(status != AVKeyValueStatusLoaded) {
                 NSLog(@"error loading asset tracks: %@", [error localizedDescription]);
                 // reset
-                bReady = false;//_bReady;
-                bLoaded = false;//_bLoaded;
+                //bReady = false;//_bReady;
+                _bLoaded = false;//_bLoaded;
                 //bPlayStateBeforeLoad = _bPlayStateBeforeLoad;
                 if(bAsync == NO){
                     dispatch_semaphore_signal(sema);
@@ -86,8 +120,8 @@ static const void *PlayerRateContext = &ItemStatusContext;
             if(CMTimeCompare(_duration, kCMTimeZero) == 0) {
                 NSLog(@"track loaded with zero duration.");
                 // reset
-                bReady = false;//_bReady;
-                bLoaded = false;//_bLoaded;
+                //bReady = false;//_bReady;
+                _bLoaded = false;//_bLoaded;
                 //bPlayStateBeforeLoad = _bPlayStateBeforeLoad;
                 if(bAsync == NO){
                     dispatch_semaphore_signal(sema);
@@ -99,8 +133,8 @@ static const void *PlayerRateContext = &ItemStatusContext;
             if([videoTracks count] == 0) {
                 NSLog(@"no video tracks found.");
                 // reset
-                bReady = false;//_bReady;
-                bLoaded = false;//_bLoaded;
+                //bReady = false;//_bReady;
+                _bLoaded = false;//_bLoaded;
                 //bPlayStateBeforeLoad = _bPlayStateBeforeLoad;
                 if(bAsync == NO){
                     dispatch_semaphore_signal(sema);
@@ -113,7 +147,7 @@ static const void *PlayerRateContext = &ItemStatusContext;
             
             // set asset
             self.asset = asset;
-            duration = _duration;
+//            duration = _duration;
             
             // create asset reader
             // do we need one here? Lukasz does this and seems to maybe have something to do with time?
@@ -129,10 +163,12 @@ static const void *PlayerRateContext = &ItemStatusContext;
             
             // get info from track (assume just one video track at position 0 - is this wise?
             // otherwise use: for (AVAssetTrack *trackPtr in videoTracks) etc....
-            AVAssetTrack * videoTrack = [videoTracks objectAtIndex:0];
-            frameRate = videoTrack.nominalFrameRate;
-            videoWidth = [videoTrack naturalSize].width;
-            videoHeight = [videoTrack naturalSize].height;
+            AVAssetTrack * videoTrack = videoTracks.firstObject;
+            _frameRate = videoTrack.nominalFrameRate;
+            _videoWidth = [videoTrack naturalSize].width;
+            _videoHeight = [videoTrack naturalSize].height;
+            _totalFrames = floor((float)CMTimeGetSeconds(_duration) * _frameRate);
+            _minFrameDuration = videoTrack.minFrameDuration;
             
             // extract codec subtype
             OSType fourcc;
@@ -148,9 +184,11 @@ static const void *PlayerRateContext = &ItemStatusContext;
                 destChars[2] = (fourcc>>8) & 0xFF;
                 destChars[3] = (fourcc) & 0xFF;
                 destChars[4] = 0;
-                NSLog(@"codec sub-type is '%@'", [NSString stringWithCString:destChars encoding:NSASCIIStringEncoding]);
+                //NSLog(@"codec sub-type is '%@'", [NSString stringWithCString:destChars encoding:NSASCIIStringEncoding]);
             }
             
+            double elapsedTime = getTickCount() - startTime;
+            //NSLog(@"Time A: %f", elapsedTime);
             @synchronized (self) {
                 
                 switch (fourcc) {
@@ -161,41 +199,39 @@ static const void *PlayerRateContext = &ItemStatusContext;
                     case kHapAOnlyCodecSubType:
                     {
                         //	if there's a hap output, remove it from the "old" item
-                        if (hapOutput != nil)	{
-                            if (self.playerItem != nil)
-                                [self.playerItem removeOutput:hapOutput];
+                        if (_hapOutput != nil)	{
+                            if (self.playerItem != nil) [self.playerItem removeOutput:_hapOutput];
                         }
                         //	else there's no hap output- create one
                         else	{
-                            hapOutput = [[AVPlayerItemHapDXTOutput alloc] init];
-                            [hapOutput setSuppressesPlayerRendering:YES];
+                            _hapOutput = [[AVPlayerItemHapDXTOutput alloc] init];
+                            [_hapOutput setSuppressesPlayerRendering:YES];
                             //	if the user's displaying the the NSImage/CPU tab, we want this output to output as RGB
                             //if ([tabView indexOfTabViewItem:[tabView selectedTabViewItem]]==1)
                             // gameover: you have to set this true if you want the pixels!!!
-                            //[hapOutput setOutputAsRGB:YES];
+                            //[_hapOutput setOutputAsRGB:YES];
                         }
                         
                         //	add the outputs to the new player item
-                        [self.playerItem addOutput:hapOutput];
+                        [self.playerItem addOutput:_hapOutput];
                         
                     }
                         break;
                     default:
                     {
                         //	if there's an output, remove it from the "old" item
-                        if (nativeAVFOutput != nil)	{
-                            if (self.playerItem != nil)
-                                [self.playerItem removeOutput:nativeAVFOutput];
+                        if (_nativeAVFOutput != nil)	{
+                            if (self.playerItem != nil) [self.playerItem removeOutput:_nativeAVFOutput];
                         }else{
                             //	else there's no output- create one
                             NSDictionary *pba = [NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithInteger:kCVPixelFormatType_32BGRA], kCVPixelBufferPixelFormatTypeKey, [NSNumber numberWithBool:YES], kCVPixelBufferIOSurfaceOpenGLFBOCompatibilityKey, nil];
                             //NSDictionary *pixBuffAttributes = @{(id)kCVPixelBufferPixelFormatTypeKey:@(kCVPixelFormatType_32ARGB)};
-                            nativeAVFOutput = [[AVPlayerItemVideoOutput alloc] initWithPixelBufferAttributes:pba];
-                            [nativeAVFOutput setSuppressesPlayerRendering:YES];
+                            _nativeAVFOutput = [[AVPlayerItemVideoOutput alloc] initWithPixelBufferAttributes:pba];
+                            [_nativeAVFOutput setSuppressesPlayerRendering:YES];
                         }
                         
                         //	add the outputs to the new player item
-                        [self.playerItem addOutput:nativeAVFOutput];
+                        [self.playerItem addOutput:_nativeAVFOutput];
                     }
                         
                         break;
@@ -222,7 +258,7 @@ static const void *PlayerRateContext = &ItemStatusContext;
             if ([NSThread isMainThread]){
                 [self.player replaceCurrentItemWithPlayerItem:self.playerItem];
             }else{
-                [self.player performSelectorOnMainThread:@selector(replaceCurrentItemWithPlayerItem:) withObject:self.playerItem waitUntilDone:YES];
+                [self.player performSelectorOnMainThread:@selector(replaceCurrentItemWithPlayerItem:) withObject:self.playerItem waitUntilDone:NO]; // change this to NO to make it really non-block!!????
             }
             
                 // create new player
@@ -245,8 +281,11 @@ static const void *PlayerRateContext = &ItemStatusContext;
                 
 //                self.player = _player; //???
             
+                
+
+                
                 // loaded
-                bLoaded = true;
+                _bLoaded = true;
                 
                 if(bAsync == NO){
                     dispatch_semaphore_signal(sema);
@@ -258,75 +297,112 @@ static const void *PlayerRateContext = &ItemStatusContext;
                 
                 [self.player seekToTime:kCMTimeZero];
 //                [self.player setRate:rate];
+                //NSLog(@"Finished the load");
+                
+                
             }
             
         }];
     });
     
-    CVReturn err = CVOpenGLTextureCacheCreate(kCFAllocatorDefault,
-                                     nullptr,
-                                     CGLGetCurrentContext(),
-                                     CGLGetPixelFormat(CGLGetCurrentContext()),
-                                     nullptr,
-                                     &_videoTextureCache);
     
-    bReady = true;
+    
+    if (_videoTextureCache == nil) {
+        CVReturn err = CVOpenGLTextureCacheCreate(kCFAllocatorDefault,
+                                                  nullptr,
+                                                  CGLGetCurrentContext(),
+                                                  CGLGetPixelFormat(CGLGetCurrentContext()),
+                                                  nullptr,
+                                                  &_videoTextureCache);
+        
+        if (err != noErr) {
+            NSLog(@"Error at CVOpenGLTextureCacheCreate %d", err);
+        }
+        
+    }
     
 }
 
 - (void) itemDidPlayToEnd:(NSNotification *)note	{
     @synchronized (self){
         [self.player seekToTime:kCMTimeZero];
-        [self.player setRate:rate];
+        [self.player setRate:_rate];
     }
 }
 
 - (void) play{
+//    if(!_bLoaded) return;
     @synchronized (self){
-        [self.player seekToTime:kCMTimeZero];
-        [self.player setRate:rate];
-    }
-}
-
-- (void) setPaused:(BOOL)bPaused{
-    //dispatch_sync(dispatch_get_main_queue(), ^{
-        @synchronized (self){
-            if(bPaused){
-                [self.player setRate:0.0f];
-            }else{
-                [self.player setRate:rate];
-            }
-        }
-    //});
-    
-}
-
-- (void) setSpeed:(float)speed{
-    @synchronized (self){
-        rate = speed;
-        [self.player setRate:rate];
-    }
-}
-
-- (void)setPosition:(float)position {
-    if(bReady){
-        double time = CMTimeGetSeconds(duration) * position;
-        [self.player seekToTime:CMTimeMakeWithSeconds(time, NSEC_PER_SEC)];
-    }
-}
-
-- (void)setFrame:(int)frame {
-    if(bReady){
-        float position = (float)frame / ((float)CMTimeGetSeconds(duration) * frameRate);
-        NSLog(@"frame - position: %d %f", frame, position);
-        [self setPosition:position];
+        //[self.player seekToTime:kCMTimeZero];
+        [self.player setRate:_rate];
     }
 }
 
 - (void) stop{
+//    if(!_bLoaded) return;
     @synchronized (self){
         [self.player setRate:0.0f];
     }
+}
+
+- (void) setPaused:(BOOL)bPaused{
+//    if(!_bLoaded) return;
+    @synchronized (self){
+        if(bPaused){
+            [self.player setRate:0.0f];
+        }else{
+            [self.player setRate:_rate];
+        }
+    }
+}
+
+- (void) setSpeed:(float)speed{
+//    if(!_bLoaded) return;
+    @synchronized (self){
+        _rate = speed;
+        [self.player setRate:_rate];
+    }
+}
+
+- (void)setPosition:(float)position {
+//    if(!_bLoaded) return;
+    @synchronized (self){
+        
+//        float tRate = [self.player rate];
+//        [self.player setRate:0.0f];
+        CMTime time = CMTimeMakeWithSeconds(CMTimeGetSeconds(_duration) * position, NSEC_PER_SEC);
+        time = CMTimeMaximum(time, kCMTimeZero);
+        time = CMTimeMinimum(time, _duration);
+        [self.player seekToTime:time
+                toleranceBefore:kCMTimeZero
+                 toleranceAfter:kCMTimeZero
+              completionHandler:^(BOOL finished)
+        {
+//            int nFrame = CMTimeGetSeconds([self.player currentTime]) * frameRate;
+//            NSLog(@"setPosComp: %d", nFrame);
+//            [self.player setRate:tRate];
+        }];
+        
+        
+    }
+}
+
+- (void)setFrame:(int)frame {
+//    if(!_bLoaded) return;
+    @synchronized (self){
+        //NSLog(@"setFrame: %d", frame);
+        float position = (float)frame / (float)_totalFrames;
+        [self setPosition:position];
+    }
+}
+
+- (int) getCurrentFrame{
+//    if(!_bLoaded) return;
+    return _currentFrame;
+}
+- (void) setCurrentFrame:(CMTime)frameTime{
+//    if(!_bLoaded) return;
+    _currentFrame = CMTimeGetSeconds(frameTime) *  _frameRate;
 }
 
 - (void) close{
@@ -334,39 +410,57 @@ static const void *PlayerRateContext = &ItemStatusContext;
 }
 
 - (NSInteger) getWidth{
-    return videoWidth;
+//    if(!_bLoaded) return;
+    return _videoWidth;
 }
 
 - (NSInteger) getHeight{
-    return videoHeight;
+//    if(!_bLoaded) return;
+    return _videoHeight;
 }
 
 - (float) getFrameRate{
-    return frameRate;
+//    if(!_bLoaded) return;
+    return _frameRate;
+}
+
+- (int) getTotalNumFrames{
+//    if(!_bLoaded) return;
+    return _totalFrames;
 }
 
 - (CMTime) getDuration{
-    return duration;
+//    if(!_bLoaded) return;
+    return _duration;
 }
 
 - (AVPlayer*) getPlayer{
+//    if(!_bLoaded) return;
     return self.player;
 }
 
 - (AVPlayerItemVideoOutput*) getAVFOutput{
-    return nativeAVFOutput;
+//    if(!_bLoaded) return;
+    return _nativeAVFOutput;
 }
 
 - (AVPlayerItemHapDXTOutput*) getHAPOutput{
-    return hapOutput;
+//    if(!_bLoaded) return;
+    return _hapOutput;
 }
 
 - (CVOpenGLTextureCacheRef) getTextureCacheRef{
+//    if(!_bLoaded) return;
     return _videoTextureCache;
 }
 
 - (CVOpenGLTextureRef) getTextureRef{
+//    if(!_bLoaded) return;
     return _videoTextureRef;
+}
+
+- (BOOL) isLoaded{
+    return _bLoaded;
 }
 
 @end

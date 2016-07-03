@@ -13,6 +13,7 @@
 #include "ofPixels.h"
 #include "ofTexture.h"
 #include "ofThread.h"
+#include "ofGraphics.h"
 #include "ofShader.h"
 
 
@@ -51,6 +52,8 @@ public:
     const ofPixels & getPixels() const;
     ofPixels & getPixels();
     ofTexture * getTexturePtr();
+    ofTexture &	getTexture();
+    const ofTexture & getTexture() const;
     
     float getWidth() const;
     float getHeight() const;
@@ -80,11 +83,9 @@ public:
     void nextFrame();
     void previousFrame();
     
-    ofxHAPAVPlayer& operator=(ofxHAPAVPlayer other);
+//    ofxHAPAVPlayer& operator=(ofxHAPAVPlayer other);
     
 protected:
-    
-    int currentFrame;
     
     bool bFrameNew;
     bool bNeedsShader;
@@ -99,7 +100,9 @@ protected:
     ofShader shader;
     
 #ifdef __OBJC__
-    ofxHAPAVPlayerDelegate      *delegate;
+    ofxHAPAVPlayerDelegate * delegate = nil;
+#else
+    void * delegate;
 #endif
     
 };
