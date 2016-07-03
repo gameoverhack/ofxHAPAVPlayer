@@ -5,12 +5,14 @@
   },
   "DVTSourceControlWorkspaceBlueprintWorkingCopyStatesKey" : {
     "8671D5E53E4C4F4D77CFBBE6EE595FBE78BE011E" : 0,
-    "2DE9C8846D9375EAACFABA8963120E8E7719BAF5" : 0
+    "2DE9C8846D9375EAACFABA8963120E8E7719BAF5" : 0,
+    "E649920D574BECD5F30A53D708FB9D8DE79308CF" : 0
   },
   "DVTSourceControlWorkspaceBlueprintIdentifierKey" : "E583EA83-E90E-478D-9B58-B86182EFB3F0",
   "DVTSourceControlWorkspaceBlueprintWorkingCopyPathsKey" : {
     "8671D5E53E4C4F4D77CFBBE6EE595FBE78BE011E" : "ofxHAPAVPlayer\/",
-    "2DE9C8846D9375EAACFABA8963120E8E7719BAF5" : ".."
+    "2DE9C8846D9375EAACFABA8963120E8E7719BAF5" : "..",
+    "E649920D574BECD5F30A53D708FB9D8DE79308CF" : "ofxThreadedVideo\/"
   },
   "DVTSourceControlWorkspaceBlueprintNameKey" : "ofxHAPAVPlayer_example",
   "DVTSourceControlWorkspaceBlueprintVersion" : 204,
@@ -25,6 +27,11 @@
       "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "github.com:gameoverhack\/ofxHAPAVPlayer.git",
       "DVTSourceControlWorkspaceBlueprintRemoteRepositorySystemKey" : "com.apple.dt.Xcode.sourcecontrol.Git",
       "DVTSourceControlWorkspaceBlueprintRemoteRepositoryIdentifierKey" : "8671D5E53E4C4F4D77CFBBE6EE595FBE78BE011E"
+    },
+    {
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "github.com:gameoverhack\/ofxThreadedVideo.git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositorySystemKey" : "com.apple.dt.Xcode.sourcecontrol.Git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryIdentifierKey" : "E649920D574BECD5F30A53D708FB9D8DE79308CF"
     }
   ]
 }
