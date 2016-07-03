@@ -41,6 +41,9 @@
 @property (nonatomic, retain) AVPlayerItemVideoOutput * nativeAVFOutput;
 @property (nonatomic, retain) AVPlayerItemHapDXTOutput * hapOutput;
 
+@property (nonatomic, assign) CVOpenGLTextureCacheRef     videoTextureCache;
+@property (nonatomic, assign) CVOpenGLTextureRef          videoTextureRef;
+
 @property (nonatomic, assign, readonly, getter = isLoading) BOOL bLoaded;
 
 @property (nonatomic, assign, readonly) float rate;

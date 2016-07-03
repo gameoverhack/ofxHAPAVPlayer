@@ -41,7 +41,24 @@ ofxHAPAVPlayer::~ofxHAPAVPlayer(){
 
 //--------------------------------------------------------------
 void ofxHAPAVPlayer::close(){
-    [delegate close];
+    
+    if (delegate != nil) {
+        
+        // clear pixels
+        pixels.clear();
+        for (int i=0; i<2; ++i)	{
+            videoTextures[i].clear();
+            internalFormats[i] = 0;
+        }
+        
+        [delegate close];
+        [delegate release];
+        
+        delegate = nil;
+    }
+    
+    bFrameNew = false;
+    
 }
 
 //--------------------------------------------------------------
@@ -54,6 +71,7 @@ void ofxHAPAVPlayer::load(string path){
             delegate = [[ofxHAPAVPlayerDelegate alloc] init];
             for (int i=0; i<2; ++i)	{
                 videoTextures[i].clear();
+                videoTextures[0].allocate(1, 1, GL_RGBA);
                 internalFormats[i] = 0;
             }
             bNeedsShader = false;
@@ -129,12 +147,11 @@ float ofxHAPAVPlayer::getHeight() const{
 
 //--------------------------------------------------------------
 void ofxHAPAVPlayer::update(){
-
+    
     bFrameNew = false;
     
     if(delegate == nil) return;
     if(![delegate isLoaded]) return;
-    
     
     CVOpenGLTextureCacheRef _videoTextureCache = [delegate getTextureCacheRef];
     CVOpenGLTextureRef _videoTextureRef = [delegate getTextureRef];
@@ -144,9 +161,9 @@ void ofxHAPAVPlayer::update(){
     AVPlayerItemHapDXTOutput* hapOutput = [delegate getHAPOutput];
     
     if(hapOutput != nil) {
-        //[[delegate getPlayer] currentTime];
+
         frameTime = [hapOutput itemTimeForMachAbsoluteTime:mach_absolute_time()];
-        //cout << [[delegate getPlayer] rate] << " : " << frameTime.value << " == " << [[delegate getPlayer] currentTime].value << endl;
+
         HapDecoderFrame	*dxtFrame = [hapOutput allocFrameClosestToTime:frameTime];
 
         if (dxtFrame != nil) {
@@ -301,7 +318,7 @@ void ofxHAPAVPlayer::update(){
                 glPopClientAttrib();
                 glPopAttrib();
                 
-                glFlush();
+                //glFlush();
                 
             }
             [dxtFrame release];
@@ -331,38 +348,32 @@ void ofxHAPAVPlayer::update(){
             bNeedsShader = false;
             
             CVPixelBufferLockBaseAddress(imageBuffer, kCVPixelBufferLock_ReadOnly);
-            
+
             if([delegate getWidth] != videoTextures[0].getWidth()
                || [delegate getHeight] != videoTextures[0].getHeight()
                || internalFormats[0] != GL_RGBA){
                 internalFormats[0] = GL_RGBA;
                 videoTextures[0].allocate([delegate getWidth], [delegate getHeight], GL_RGBA);
+                videoTextures[0].getTextureData().tex_t = 1.0f;
+                videoTextures[0].getTextureData().tex_u = 1.0f;
+                videoTextures[0].setTextureMinMagFilter(GL_LINEAR, GL_LINEAR);
+                videoTextures[0].setTextureWrap(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
             }
+
+            CVReturn err = CVOpenGLTextureCacheCreateTextureFromImage(nullptr,
+                                                                      _videoTextureCache,
+                                                                      imageBuffer,
+                                                                      nullptr,
+                                                                      &_videoTextureRef);
             
-            ofTextureData & texData = videoTextures[0].getTextureData();
-            texData.tex_t = 1.0f;
-            texData.tex_u = 1.0f;
-            
-            CVReturn err;
-            unsigned int textureCacheID;
-            
-            err = CVOpenGLTextureCacheCreateTextureFromImage(nullptr,
-                                                             _videoTextureCache,
-                                                             imageBuffer,
-                                                             nullptr,
-                                                             &_videoTextureRef);
-            
-            textureCacheID = CVOpenGLTextureGetName(_videoTextureRef);
+            unsigned int textureCacheID = CVOpenGLTextureGetName(_videoTextureRef);
             
             videoTextures[0].setUseExternalTextureID(textureCacheID);
-            videoTextures[0].setTextureMinMagFilter(GL_LINEAR, GL_LINEAR);
-            videoTextures[0].setTextureWrap(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
             if(ofIsGLProgrammableRenderer() == false) {
                 videoTextures[0].bind();
                 glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
                 videoTextures[0].unbind();
             }
-            
             if(err) {
                 ofLogError("ofAVFoundationPlayer") << "initTextureCache(): error creating texture cache from image " << err << ".";
             }
@@ -370,15 +381,16 @@ void ofxHAPAVPlayer::update(){
             CVPixelBufferUnlockBaseAddress(imageBuffer, kCVPixelBufferLock_ReadOnly);
             
             CVOpenGLTextureCacheFlush(_videoTextureCache, 0);
+            
             if(_videoTextureRef) {
                 CVOpenGLTextureRelease(_videoTextureRef);
                 _videoTextureRef = nullptr;
             }
             
             CVPixelBufferRelease(imageBuffer);
+            
         }
     }
-    
     
 }
 
