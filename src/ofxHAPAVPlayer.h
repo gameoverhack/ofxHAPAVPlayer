@@ -101,6 +101,7 @@ protected:
     
 #ifdef __OBJC__
     ofxHAPAVPlayerDelegate * delegate = nil;
+    HapDecoderFrame             * _dedcodedFrame = nil;
 #else
     void * delegate;
 #endif

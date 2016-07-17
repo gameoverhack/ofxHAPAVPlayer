@@ -39,6 +39,7 @@ static const void *PlayerRateContext = &ItemStatusContext;
 @synthesize player = _player;
 @synthesize playerItem = _playerItem;
 @synthesize duration = _duration;
+//@synthesize dedcodedFrame = _dedcodedFrame;
 
 @synthesize nativeAVFOutput = _nativeAVFOutput;
 @synthesize hapOutput = _hapOutput;
@@ -56,11 +57,33 @@ static const void *PlayerRateContext = &ItemStatusContext;
 
 
 - (id) init	{
+    
 	self = [super init];
     self.player = [[AVPlayer alloc] init];
-    [self.player autorelease];
+    //[self.player autorelease];
     [self.player setActionAtItemEnd:AVPlayerActionAtItemEndPause];
     _rate = 1.0;
+    
+    //	make the displaylink, which will drive rendering
+    CVReturn				err = kCVReturnSuccess;
+    CGOpenGLDisplayMask		totalDisplayMask = 0;
+    GLint					virtualScreen = 0;
+    GLint					displayMask = 0;
+    NSOpenGLPixelFormat		*format = [self createGLPixelFormat];
+    
+    for (virtualScreen=0; virtualScreen<[format numberOfVirtualScreens]; ++virtualScreen){
+        [format getValues:&displayMask forAttribute:NSOpenGLPFAScreenMask forVirtualScreen:virtualScreen];
+        totalDisplayMask |= displayMask;
+    }
+    err = CVDisplayLinkCreateWithOpenGLDisplayMask(totalDisplayMask, &displayLink);
+    if(err){
+        NSLog(@"\t\terr %d creating display link in %s",err,__func__);
+        displayLink = NULL;
+    }else{
+        CVDisplayLinkSetOutputCallback(displayLink, displayLinkCallback, self);
+        CVDisplayLinkStart(displayLink);
+    }
+    
 	return self;
 }
 
@@ -72,9 +95,9 @@ static const void *PlayerRateContext = &ItemStatusContext;
     }
     
 //    [asyncLock lock];
-//    
+//
 //    [asyncLock unlock];
-//    
+//
 //    // release locks
 //    [asyncLock autorelease];
 //    
@@ -89,6 +112,9 @@ static const void *PlayerRateContext = &ItemStatusContext;
 - (void)close
 {
     [self stop];
+    
+    CVDisplayLinkStop(displayLink);
+    CVDisplayLinkRelease(displayLink);
     
     if (_videoTextureCache != NULL) {
         CVOpenGLTextureCacheRelease(self.videoTextureCache);
@@ -108,10 +134,19 @@ static const void *PlayerRateContext = &ItemStatusContext;
                                       name:AVPlayerItemDidPlayToEndTimeNotification
                                     object:self.playerItem];
         
-//        [self.playerItem autorelease];
+        //if(_bHAPEncoded) [self.playerItem removeOutput:_hapOutput];
+        //if(!_bHAPEncoded) [self.playerItem removeOutput:_nativeAVFOutput];
+        
+        //[self.playerItem autorelease];
         self.playerItem = nil;
     }
 
+    if (self.player != nil){
+        //[self.player replaceCurrentItemWithPlayerItem:nil];
+        //[self.player autorelease];
+        //self.player = nil;
+    }
+    
 //    __block AVPlayer* currentPlayer = _player;
 //    
 //    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
@@ -126,20 +161,15 @@ static const void *PlayerRateContext = &ItemStatusContext;
 //        
 //    });
     
-    if (self.player != nil){
-//        [self.player replaceCurrentItemWithPlayerItem:nil];
-//        [self.player autorelease];
-        self.player = nil;
-    }
 
     
     if (self.nativeAVFOutput != nil){
-        //[self.nativeAVFOutput autorelease];
+        [self.nativeAVFOutput autorelease];
         self.nativeAVFOutput = nil;
     }
     
     if (self.hapOutput != nil){
-        //[self.hapOutput autorelease];
+        [self.hapOutput autorelease];
         self.hapOutput = nil;
     }
 
@@ -148,6 +178,9 @@ static const void *PlayerRateContext = &ItemStatusContext;
 }
 
 - (void) load:(NSString *)path{
+    
+    [self close];
+    [self init];
     
     _bLoaded = false;
     
@@ -239,13 +272,13 @@ static const void *PlayerRateContext = &ItemStatusContext;
             // do we need one here? Lukasz does this and seems to maybe have something to do with time?
             
             //	make a player item
-            AVPlayerItem *playerItem = [[[AVPlayerItem alloc] initWithAsset:self.asset] autorelease];
-            if (playerItem == nil)	{
+            _playerItem = [[[AVPlayerItem alloc] initWithAsset:self.asset] autorelease]; //[AVPlayerItem playerItemWithAsset:self.asset]; //
+            if (_playerItem == nil)	{
                 NSLog(@"\t\terr: couldn't make AVPlayerItem in %s",__func__);
                 return;
             }
             
-            self.playerItem = playerItem;
+            self.playerItem = _playerItem;
             
             // get info from track (assume just one video track at position 0 - is this wise?
             // otherwise use: for (AVAssetTrack *trackPtr in videoTracks) etc....
@@ -300,6 +333,7 @@ static const void *PlayerRateContext = &ItemStatusContext;
                         
                         //	add the outputs to the new player item
                         [self.playerItem addOutput:_hapOutput];
+                        _bHAPEncoded = YES;
                         
                     }
                         break;
@@ -318,6 +352,7 @@ static const void *PlayerRateContext = &ItemStatusContext;
                         
                         //	add the outputs to the new player item
                         [self.playerItem addOutput:_nativeAVFOutput];
+                        _bHAPEncoded = NO;
                     }
                         
                         break;
@@ -327,7 +362,7 @@ static const void *PlayerRateContext = &ItemStatusContext;
                 NSNotificationCenter *nc = [NSNotificationCenter defaultCenter];
                 if (self.playerItem != nil){
                     //	unregister as an observer for the "old" item's play-to-end notifications
-                    [nc removeObserver:self name:AVPlayerItemDidPlayToEndTimeNotification object:playerItem];
+                    [nc removeObserver:self name:AVPlayerItemDidPlayToEndTimeNotification object:_playerItem];
                     //	register to receive notifications that the new player item has played to its end
                     [nc addObserver:self selector:@selector(itemDidPlayToEnd:) name:AVPlayerItemDidPlayToEndTimeNotification object:self.playerItem];
                 }
@@ -368,6 +403,7 @@ static const void *PlayerRateContext = &ItemStatusContext;
 //                self.player = _player; //???
             
                 
+
 
                 
                 // loaded
@@ -545,6 +581,92 @@ static const void *PlayerRateContext = &ItemStatusContext;
 
 - (BOOL) isLoaded{
     return self.bLoaded;
+}
+
+- (void) renderCallback	{
+    //NSLog(@"Displaylink!");
+    if(self.hapOutput != nil && _bHAPEncoded) {
+        CMTime frameTime = [self.hapOutput itemTimeForMachAbsoluteTime:mach_absolute_time()];
+        HapDecoderFrame	*dxtFrame = [self.hapOutput allocFrameClosestToTime:frameTime];
+        _currentFrame = CMTimeGetSeconds(frameTime) *  _frameRate;
+        [dxtFrame retain];
+        [_dedcodedFrame release];
+        _dedcodedFrame = dxtFrame;
+        if(_dedcodedFrame != nil){
+            _bFrameNeedsRender = YES;
+        }else{
+            _bFrameNeedsRender = NO;
+        }
+        [dxtFrame release];
+    }
+    
+    if(self.nativeAVFOutput != nil && !_bHAPEncoded){
+        CMTime frameTime = [self.nativeAVFOutput itemTimeForMachAbsoluteTime:mach_absolute_time()];
+        
+        if (self.nativeAVFOutput != nil && [self.nativeAVFOutput hasNewPixelBufferForItemTime:frameTime]){
+            _currentFrame = CMTimeGetSeconds(frameTime) *  _frameRate;
+            CMTime frameDisplayTime = kCMTimeZero;
+            CVPixelBufferRef imageBuffer = [self.nativeAVFOutput copyPixelBufferForItemTime:frameTime itemTimeForDisplay:&frameDisplayTime];
+            CVPixelBufferRetain(imageBuffer);
+            CVPixelBufferRelease(_imageBuffer);
+            _imageBuffer = imageBuffer;
+            if(_imageBuffer != nil){
+                _bFrameNeedsRender = YES;
+            }else{
+                _bFrameNeedsRender = NO;
+            }
+            CVPixelBufferRelease(imageBuffer);
+        }
+    }
+}
+
+- (BOOL) isFrameReadyToRender{
+    return _bFrameNeedsRender;
+}
+
+- (BOOL) isHAPEncoded{
+    return _bHAPEncoded;
+}
+
+- (CVImageBufferRef) getAVFDecodedFrame{
+    _bFrameNeedsRender = NO;
+    return _imageBuffer;
+}
+
+- (HapDecoderFrame*) getHAPDecodedFrame{
+    _bFrameNeedsRender = NO;
+    return _dedcodedFrame;
+}
+
+- (NSOpenGLPixelFormat *) createGLPixelFormat	{
+    GLuint				glDisplayMaskForAllScreens = 0;
+    CGDirectDisplayID	dspys[10];
+    CGDisplayCount		count = 0;
+    if (CGGetActiveDisplayList(10,dspys,&count)==kCGErrorSuccess)	{
+        for (int i=0; i<count; ++i)
+            glDisplayMaskForAllScreens |= CGDisplayIDToOpenGLDisplayMask(dspys[i]);
+    }
+    
+    NSOpenGLPixelFormatAttribute	attrs[] = {
+        NSOpenGLPFAAccelerated,
+        NSOpenGLPFAScreenMask,glDisplayMaskForAllScreens,
+        NSOpenGLPFANoRecovery,
+        NSOpenGLPFAAllowOfflineRenderers,
+        0};
+    return [[[NSOpenGLPixelFormat alloc] initWithAttributes:attrs] autorelease];
+}
+
+CVReturn displayLinkCallback(CVDisplayLinkRef displayLink,
+                             const CVTimeStamp *inNow,
+                             const CVTimeStamp *inOutputTime,
+                             CVOptionFlags flagsIn,
+                             CVOptionFlags *flagsOut,
+                             void *displayLinkContext)
+{
+    NSAutoreleasePool		*pool =[[NSAutoreleasePool alloc] init];
+    [(ofxHAPAVPlayerDelegate *)displayLinkContext renderCallback];
+    [pool release];
+    return kCVReturnSuccess;
 }
 
 @end

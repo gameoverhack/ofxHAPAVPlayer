@@ -12,11 +12,14 @@
 #import <HapInAVFoundation/HapInAVFoundation.h>
 
 @interface ofxHAPAVPlayerDelegate : NSObject {
+    CVDisplayLinkRef			displayLink;
     AVAsset                     * _asset;
     AVPlayer                    * _player;
 	AVPlayerItem				* _playerItem;
     AVPlayerItemVideoOutput		* _nativeAVFOutput;
     AVPlayerItemHapDXTOutput	* _hapOutput;
+    HapDecoderFrame             * _dedcodedFrame;
+    CVImageBufferRef              _imageBuffer;
     
     CVOpenGLTextureCacheRef     _videoTextureCache;
     CVOpenGLTextureRef          _videoTextureRef;
@@ -31,7 +34,8 @@
     CMTime _minFrameDuration;
     BOOL _bReady;
     BOOL _bLoaded;
-    
+    BOOL _bFrameNeedsRender;
+    BOOL _bHAPEncoded;
     id timeObserver;
 }
 
@@ -40,6 +44,8 @@
 @property (nonatomic, retain) AVPlayerItem * playerItem;
 @property (nonatomic, retain) AVPlayerItemVideoOutput * nativeAVFOutput;
 @property (nonatomic, retain) AVPlayerItemHapDXTOutput * hapOutput;
+
+//@property (nonatomic, assign, readonly, getter = getDecodedFrame) HapDecoderFrame * dedcodedFrame;
 
 @property (nonatomic, assign) CVOpenGLTextureCacheRef     videoTextureCache;
 @property (nonatomic, assign) CVOpenGLTextureRef          videoTextureRef;
@@ -71,10 +77,16 @@
 - (CMTime) getDuration;
 - (BOOL) isLoaded;
 
-- (AVPlayer*) getPlayer;
-- (AVPlayerItemVideoOutput*) getAVFOutput;
-- (AVPlayerItemHapDXTOutput*) getHAPOutput;
+//- (AVPlayer*) getPlayer;
+//- (AVPlayerItemVideoOutput*) getAVFOutput;
+//- (AVPlayerItemHapDXTOutput*) getHAPOutput;
 - (CVOpenGLTextureCacheRef) getTextureCacheRef;
 - (CVOpenGLTextureRef) getTextureRef;
+
+- (CVImageBufferRef) getAVFDecodedFrame;
+- (HapDecoderFrame*) getHAPDecodedFrame;
+
+- (BOOL) isFrameReadyToRender;
+- (BOOL) isHAPEncoded;
 
 @end

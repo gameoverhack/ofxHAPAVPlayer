@@ -38,6 +38,7 @@ void ofApp::keyReleased(int key){
             currentFileIndex++;
             if(currentFileIndex == dir.size()) currentFileIndex = 0;
             vid.load(dir.getPath(currentFileIndex));
+            cout << dir.getPath(currentFileIndex) << endl;
             vid.play();
             vid.setFrame(15);
         }
