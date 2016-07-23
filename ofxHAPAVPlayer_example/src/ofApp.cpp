@@ -13,11 +13,12 @@ void ofApp::setup(){
 //--------------------------------------------------------------
 void ofApp::update(){
     vid.update();
+    if(ofGetFrameNum() % 30 == 0) keyReleased(' ');
 }
 
 //--------------------------------------------------------------
 void ofApp::draw(){
-    vid.draw();
+    vid.draw(0,0);
     ostringstream os;
     os << "FPS: " << ofGetFrameRate() << endl;
     os << "Frame/Duration: " << vid.getCurrentFrame() << " / " << vid.getTotalNumFrames() << endl;

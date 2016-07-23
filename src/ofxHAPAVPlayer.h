@@ -15,7 +15,7 @@
 #include "ofThread.h"
 #include "ofGraphics.h"
 #include "ofShader.h"
-
+//#include "ofxHAPAVPlayerInterOp.h"
 
 #ifdef __OBJC__
 #import <Cocoa/Cocoa.h>
@@ -25,7 +25,7 @@
 #include <mach/mach_time.h>
 #endif
 
-class ofxHAPAVPlayer{
+class ofxHAPAVPlayer{// : public ofxHAPAVPlayerInterOp{
     
 public:
     
@@ -83,6 +83,8 @@ public:
     void nextFrame();
     void previousFrame();
     
+    //void renderFrame();
+    
 //    ofxHAPAVPlayer& operator=(ofxHAPAVPlayer other);
     
 protected:
@@ -101,7 +103,6 @@ protected:
     
 #ifdef __OBJC__
     ofxHAPAVPlayerDelegate * delegate = nil;
-    HapDecoderFrame             * _dedcodedFrame = nil;
 #else
     void * delegate;
 #endif

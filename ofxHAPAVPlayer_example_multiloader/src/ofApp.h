@@ -31,5 +31,6 @@ public:
     bool bRandomize;
     vector<ofxHAPAVPlayer> videos;
     ofxHAPAVPlayer vid;
+    int numLoaded;
 		
 };

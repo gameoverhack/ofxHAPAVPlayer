@@ -7,20 +7,26 @@ void ofApp::setup(){
     ofSetVerticalSync(false);
     ofBackground(0);
     
-    vid.load(ofToDataPath("SampleHap.mov"));
+    vid.load("/Users/gameover/Code/openFrameworks/addons/ofxHAPAVPlayer/ofxHAPAVPlayer_example/bin/data/SampleHap.mov");
     vid.play();
+    vid.setSpeed(1.0);
     
     dir.allowExt("mov");
-    dir.listDir(ofToDataPath("/Volumes/GhostDriver/Users/gameover/Desktop/LAF/hap")); //mediasmall/BLADIMIRSL
+    dir.listDir(ofToDataPath("/Users/gameover/Desktop/LAF/hap")); //mediasmall/BLADIMIRSL
 
-    maxPlayers = 200;
+    maxPlayers = 220;
     videos.resize(maxPlayers);
-    for(int i = 0; i < maxPlayers; i++){
-
-        videos[i].load(dir.getPath((int)ofRandom(dir.size())));
-        videos[i].play();
-        videos[i].setSpeed(3.0);
-    }
+    
+    numLoaded = 0;
+    
+//    for(int i = 0; i < maxPlayers; i++){
+//
+//        videos[i].load(dir.getPath((int)ofRandom(dir.size())));
+//        videos[i].play();
+//        videos[i].setSpeed(3.0);
+//        ofSleepMillis(5);
+//        
+//    }
     
     bRandomize = false;
     
@@ -37,13 +43,20 @@ void ofApp::update(){
     
     if(!bRandomize) return;
     if(ofGetElapsedTimeMillis() - lastTime > 40){ // every 40 millis!
-        if(ofGetFrameRate() > 50){
-            maxPlayers++;
-            videos.resize(maxPlayers);
-            videos[maxPlayers - 1].load(dir.getPath(ofRandom(dir.size())));
-            videos[maxPlayers - 1].play();
-            videos[maxPlayers - 1].setSpeed(3.0);
-        }else{
+        if(numLoaded < maxPlayers){
+            videos[numLoaded].load(dir.getPath((int)ofRandom(dir.size())));
+            videos[numLoaded].play();
+            videos[numLoaded].setSpeed(3.0);
+            numLoaded++;
+        }
+        
+//        if(ofGetFrameRate() > 50){
+//            maxPlayers++;
+//            videos.resize(maxPlayers);
+//            videos[maxPlayers - 1].load(dir.getPath(ofRandom(dir.size())));
+//            videos[maxPlayers - 1].play();
+//            videos[maxPlayers - 1].setSpeed(3.0);
+//        }else{
             int i = (int)ofRandom(maxPlayers);
             videos[i].load(dir.getPath(ofRandom(dir.size())));
             videos[i].play();
@@ -51,7 +64,7 @@ void ofApp::update(){
             i = (int)ofRandom(maxPlayers);
             videos[i].setFrame((int)ofRandom(videos[i].getTotalNumFrames()));
             lastTime = ofGetElapsedTimeMillis();
-        }
+//        }
         
     }
     

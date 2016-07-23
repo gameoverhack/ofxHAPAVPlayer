@@ -10,19 +10,24 @@
 #import <OpenGL/OpenGL.h>
 #import <AVFoundation/AVFoundation.h>
 #import <HapInAVFoundation/HapInAVFoundation.h>
+//#include "ofxHAPAVPlayerInterOp.h"
+
 
 @interface ofxHAPAVPlayerDelegate : NSObject {
     CVDisplayLinkRef			displayLink;
-    AVAsset                     * _asset;
-    AVPlayer                    * _player;
-	AVPlayerItem				* _playerItem;
-    AVPlayerItemVideoOutput		* _nativeAVFOutput;
-    AVPlayerItemHapDXTOutput	* _hapOutput;
+    AVAsset                     * asset;
+    AVPlayer                    * player;
+	AVPlayerItem				* playerItem;
+    AVPlayerItemVideoOutput		* nativeAVFOutput;
+    AVPlayerItemHapDXTOutput	* hapOutput;
     HapDecoderFrame             * _dedcodedFrame;
     CVImageBufferRef              _imageBuffer;
     
-    CVOpenGLTextureCacheRef     _videoTextureCache;
-    CVOpenGLTextureRef          _videoTextureRef;
+    CVOpenGLTextureCacheRef     videoTextureCache;
+    CVOpenGLTextureRef          videoTextureRef;
+    
+    NSLock* asyncLock;
+    NSCondition* deallocCond;
     
     NSInteger _videoWidth;
     NSInteger _videoHeight;
@@ -36,26 +41,32 @@
     BOOL _bLoaded;
     BOOL _bFrameNeedsRender;
     BOOL _bHAPEncoded;
+    BOOL _bLoading;
     id timeObserver;
+    
+    //ofxHAPAVPlayerInterOp * parent;
+    
 }
 
-@property (nonatomic, retain) AVAsset * asset;
-@property (nonatomic, retain) AVPlayer * player;
-@property (nonatomic, retain) AVPlayerItem * playerItem;
-@property (nonatomic, retain) AVPlayerItemVideoOutput * nativeAVFOutput;
-@property (nonatomic, retain) AVPlayerItemHapDXTOutput * hapOutput;
+@property (strong, nonatomic) AVAsset * asset;
+@property (strong, nonatomic) AVPlayer * player;
+@property (strong, nonatomic) AVPlayerItem * playerItem;
+@property (strong, nonatomic) AVPlayerItemVideoOutput * nativeAVFOutput;
+@property (strong, nonatomic) AVPlayerItemHapDXTOutput * hapOutput;
 
 //@property (nonatomic, assign, readonly, getter = getDecodedFrame) HapDecoderFrame * dedcodedFrame;
 
 @property (nonatomic, assign) CVOpenGLTextureCacheRef     videoTextureCache;
 @property (nonatomic, assign) CVOpenGLTextureRef          videoTextureRef;
 
-@property (nonatomic, assign, readonly, getter = isLoading) BOOL bLoaded;
+//@property (nonatomic, assign, readonly, getter = isLoading) BOOL bLoaded;
 
-@property (nonatomic, assign, readonly) float rate;
+//@property (nonatomic, assign, readonly) float rate;
 //@property (nonatomic, assign) int currentFrame;
-@property (nonatomic, assign, readonly) int totalFrames;
-@property (nonatomic, assign, readonly) CMTime duration;
+//@property (nonatomic, assign, readonly) int totalFrames;
+//@property (nonatomic, assign, readonly) CMTime duration;
+
+//- (void) setParent:(ofxHAPAVPlayerInterOp*)_parent;
 
 - (void) load:(NSString *)path;
 
@@ -87,6 +98,7 @@
 - (HapDecoderFrame*) getHAPDecodedFrame;
 
 - (BOOL) isFrameReadyToRender;
+- (void) frameWasRendered;
 - (BOOL) isHAPEncoded;
 
 @end
