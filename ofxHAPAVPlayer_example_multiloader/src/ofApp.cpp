@@ -4,7 +4,7 @@
 void ofApp::setup(){
     
     ofSetFrameRate(1000);
-    ofSetVerticalSync(false);
+    ofSetVerticalSync(true);
     ofBackground(0);
     
     vid.load("/Users/gameover/Code/openFrameworks/addons/ofxHAPAVPlayer/ofxHAPAVPlayer_example/bin/data/SampleHap.mov");
@@ -12,9 +12,9 @@ void ofApp::setup(){
     vid.setSpeed(1.0);
     
     dir.allowExt("mov");
-    dir.listDir(ofToDataPath("/Users/gameover/Desktop/LAF/hap")); //mediasmall/BLADIMIRSL
+    dir.listDir(ofToDataPath("/Users/gameover/Desktop/LAF")); //mediasmall/BLADIMIRSL
 
-    maxPlayers = 220;
+    maxPlayers = 16;
     videos.resize(maxPlayers);
     
     numLoaded = 0;
@@ -77,7 +77,7 @@ void ofApp::draw(){
     vid.draw(0, ofGetHeight() - vid.getHeight());
     
     int xM = 0; int yM = 0;
-    int tilesWide = 20;
+    int tilesWide = 4;
     for(int i = 0; i < maxPlayers; i++){
 
         float width = (ofGetWidth() / tilesWide);

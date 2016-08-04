@@ -22,6 +22,8 @@ public:
     void dragEvent(ofDragInfo dragInfo);
     void gotMessage(ofMessage msg);
     
+    bool bTestDtor;
+    
     int currentFileIndex;
     ofDirectory dir;
     

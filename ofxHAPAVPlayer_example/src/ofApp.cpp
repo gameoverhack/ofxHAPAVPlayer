@@ -6,8 +6,12 @@ void ofApp::setup(){
     dir.allowExt("mov");
     dir.listDir(ofToDataPath(""));
     currentFileIndex = 0;
+    
+    bTestDtor = false;
+    
     vid.load(dir.getPath(currentFileIndex));
     vid.play();
+    
     vidPtr = shared_ptr<ofxHAPAVPlayer>(new ofxHAPAVPlayer);
     vidPtr->load(dir.getPath(currentFileIndex));
     vidPtr->play();
@@ -17,7 +21,7 @@ void ofApp::setup(){
 void ofApp::update(){
     vid.update();
     vidPtr->update();
-    if(ofGetFrameNum() % 40 == 0) keyReleased(' ');
+    if(ofGetFrameNum() % 20 == 0) keyReleased(' ');
 }
 
 //--------------------------------------------------------------
@@ -45,11 +49,15 @@ void ofApp::keyReleased(int key){
             if(currentFileIndex == dir.size()) currentFileIndex = 0;
             vid.load(dir.getPath(currentFileIndex));
             vid.play();
-            vidPtr = shared_ptr<ofxHAPAVPlayer>(new ofxHAPAVPlayer);
-            vidPtr->load(dir.getPath(currentFileIndex));
-            vidPtr->play();
-            cout << dir.getPath(currentFileIndex) << endl;
-//            vid.setFrame(15);
+            
+            if(bTestDtor){
+                vidPtr = shared_ptr<ofxHAPAVPlayer>(new ofxHAPAVPlayer);
+                vidPtr->load(dir.getPath(currentFileIndex));
+                vidPtr->play();
+            }
+            
+            //cout << dir.getPath(currentFileIndex) << endl;
+            
         }
             break;
         case 'z':
@@ -58,6 +66,9 @@ void ofApp::keyReleased(int key){
             vidPtr->load(dir.getPath(currentFileIndex));
             vidPtr->play();
         }
+            break;
+        case 'd':
+            bTestDtor = !bTestDtor;
             break;
         case 't':
             vid.setFrame(15);
@@ -74,7 +85,6 @@ void ofApp::keyReleased(int key){
             break;
         case 'b':
         {
-            cout << "here" << endl;
             vid.setPaused(true);
         }
             break;
