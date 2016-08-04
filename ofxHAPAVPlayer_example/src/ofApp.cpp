@@ -6,8 +6,8 @@ void ofApp::setup(){
     dir.allowExt("mov");
     dir.listDir(ofToDataPath(""));
     currentFileIndex = 0;
-//    vid.load(dir.getPath(currentFileIndex));
-//    vid.play();
+    vid.load(dir.getPath(currentFileIndex));
+    vid.play();
     vidPtr = shared_ptr<ofxHAPAVPlayer>(new ofxHAPAVPlayer);
     vidPtr->load(dir.getPath(currentFileIndex));
     vidPtr->play();
@@ -15,14 +15,14 @@ void ofApp::setup(){
 
 //--------------------------------------------------------------
 void ofApp::update(){
-//    vid.update();
+    vid.update();
     vidPtr->update();
     if(ofGetFrameNum() % 40 == 0) keyReleased(' ');
 }
 
 //--------------------------------------------------------------
 void ofApp::draw(){
-//    vid.draw(0,0);
+    vid.draw(0,0);
     vidPtr->draw(640, 0);
     ostringstream os;
     os << "FPS: " << ofGetFrameRate() << endl;
@@ -43,8 +43,8 @@ void ofApp::keyReleased(int key){
         {
             currentFileIndex++;
             if(currentFileIndex == dir.size()) currentFileIndex = 0;
-//            vid.load(dir.getPath(currentFileIndex));
-//            vid.play();
+            vid.load(dir.getPath(currentFileIndex));
+            vid.play();
             vidPtr = shared_ptr<ofxHAPAVPlayer>(new ofxHAPAVPlayer);
             vidPtr->load(dir.getPath(currentFileIndex));
             vidPtr->play();
