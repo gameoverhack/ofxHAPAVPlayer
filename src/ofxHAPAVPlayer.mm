@@ -32,7 +32,8 @@ gl_FragColor = rgba;\
 
 //--------------------------------------------------------------
 ofxHAPAVPlayer::ofxHAPAVPlayer(){
-    }
+
+}
 
 //--------------------------------------------------------------
 ofxHAPAVPlayer::~ofxHAPAVPlayer(){
@@ -41,7 +42,7 @@ ofxHAPAVPlayer::~ofxHAPAVPlayer(){
 
 //--------------------------------------------------------------
 void ofxHAPAVPlayer::close(){
-    
+
     if (delegate != nil) {
         
         // clear pixels
@@ -51,12 +52,18 @@ void ofxHAPAVPlayer::close(){
             internalFormats[i] = 0;
         }
         
-        [delegate close];
-        [delegate release];
-        
+        // dispose videoplayer
+        __block ofxHAPAVPlayerDelegate *currentDelegate = delegate;
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0), ^{
+            @autoreleasepool {
+                [currentDelegate unloadVideo]; // synchronious call to unload video
+                [currentDelegate autorelease]; // release
+            }
+        });
+
         delegate = nil;
     }
-    
+
     bFrameNew = false;
     
 }
@@ -80,7 +87,6 @@ void ofxHAPAVPlayer::load(string path){
         }
         
     }
-
     
     bFrameNew = false;
     NSString *nsPath = [NSString stringWithCString:path.c_str() encoding:[NSString defaultCStringEncoding]];
@@ -160,10 +166,10 @@ float ofxHAPAVPlayer::getHeight() const{
 
 //--------------------------------------------------------------
 void ofxHAPAVPlayer::update(){
-    
+
     if(delegate == nil) return;
     if(![delegate isLoaded]) return;
-
+    
     bFrameNew = false;
     
     if([delegate isFrameReadyToRender]){
@@ -376,7 +382,7 @@ void ofxHAPAVPlayer::update(){
                 
                 if(_videoTextureRef) {
                     CVOpenGLTextureRelease(_videoTextureRef);
-                    _videoTextureRef = nullptr;
+                    _videoTextureRef = nil;
                 }
                 
                 //CVPixelBufferRelease(imageBuffer);

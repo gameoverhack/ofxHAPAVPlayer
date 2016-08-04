@@ -6,19 +6,24 @@ void ofApp::setup(){
     dir.allowExt("mov");
     dir.listDir(ofToDataPath(""));
     currentFileIndex = 0;
-    vid.load(dir.getPath(currentFileIndex));
-    vid.play();
+//    vid.load(dir.getPath(currentFileIndex));
+//    vid.play();
+    vidPtr = shared_ptr<ofxHAPAVPlayer>(new ofxHAPAVPlayer);
+    vidPtr->load(dir.getPath(currentFileIndex));
+    vidPtr->play();
 }
 
 //--------------------------------------------------------------
 void ofApp::update(){
-    vid.update();
-    if(ofGetFrameNum() % 30 == 0) keyReleased(' ');
+//    vid.update();
+    vidPtr->update();
+    //if(ofGetFrameNum() % 40 == 0) keyReleased(' ');
 }
 
 //--------------------------------------------------------------
 void ofApp::draw(){
-    vid.draw(0,0);
+//    vid.draw(0,0);
+    vidPtr->draw(640, 0);
     ostringstream os;
     os << "FPS: " << ofGetFrameRate() << endl;
     os << "Frame/Duration: " << vid.getCurrentFrame() << " / " << vid.getTotalNumFrames() << endl;
@@ -38,10 +43,20 @@ void ofApp::keyReleased(int key){
         {
             currentFileIndex++;
             if(currentFileIndex == dir.size()) currentFileIndex = 0;
-            vid.load(dir.getPath(currentFileIndex));
+//            vid.load(dir.getPath(currentFileIndex));
+//            vid.play();
+            vidPtr = shared_ptr<ofxHAPAVPlayer>(new ofxHAPAVPlayer);
+            vidPtr->load(dir.getPath(currentFileIndex));
+            vidPtr->play();
             cout << dir.getPath(currentFileIndex) << endl;
-            vid.play();
-            vid.setFrame(15);
+//            vid.setFrame(15);
+        }
+            break;
+        case 'z':
+        {
+            vidPtr = shared_ptr<ofxHAPAVPlayer>(new ofxHAPAVPlayer);
+            vidPtr->load(dir.getPath(currentFileIndex));
+            vidPtr->play();
         }
             break;
         case 't':

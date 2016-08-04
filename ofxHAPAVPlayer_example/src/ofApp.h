@@ -26,5 +26,6 @@ public:
     ofDirectory dir;
     
     ofxHAPAVPlayer vid;
-		
+    shared_ptr<ofxHAPAVPlayer> vidPtr;
+
 };

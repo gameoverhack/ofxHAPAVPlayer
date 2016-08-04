@@ -100,5 +100,6 @@
 - (BOOL) isFrameReadyToRender;
 - (void) frameWasRendered;
 - (BOOL) isHAPEncoded;
+- (void) unloadVideo;
 
 @end
