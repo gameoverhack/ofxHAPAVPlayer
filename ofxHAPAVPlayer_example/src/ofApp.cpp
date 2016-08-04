@@ -17,7 +17,7 @@ void ofApp::setup(){
 void ofApp::update(){
 //    vid.update();
     vidPtr->update();
-    //if(ofGetFrameNum() % 40 == 0) keyReleased(' ');
+    if(ofGetFrameNum() % 40 == 0) keyReleased(' ');
 }
 
 //--------------------------------------------------------------

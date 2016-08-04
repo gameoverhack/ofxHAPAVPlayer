@@ -85,35 +85,35 @@ static const void *PlayerRateContext = &ItemStatusContext;
     
     [asyncLock lock];
     
-////    if(_dedcodedFrame != nil){
-//        NSLog(@"release dxt frame");
-//        [_dedcodedFrame release];
-//        _dedcodedFrame = nil;
-////    }
-//    
-////    if(_imageBuffer != nil){
-//        NSLog(@"release image buffer ");
-//        CVPixelBufferRelease(_imageBuffer);
-//        _imageBuffer = nil;
-////    }
-//
-////    if(displayLink != nil){
-//        NSLog(@"release cvdisplaylink");
-//        CVDisplayLinkStop(displayLink);
-//        CVDisplayLinkRelease(displayLink);
-//        displayLink = nil;
-////    }
-//    
-////    if(videoTextureCache != nil){
-//        NSLog(@"release texture cache");
-//        CVOpenGLTextureCacheRelease(videoTextureCache);
-//        videoTextureCache = nil;
-////    }
-////    if(videoTextureRef != nil){
-//        NSLog(@"release texture ref");
-//        CVOpenGLTextureRelease(videoTextureRef);
-//        videoTextureRef = nil;
-////    }
+//    if(_dedcodedFrame != nil){
+        NSLog(@"release dxt frame");
+        [_dedcodedFrame release];
+        _dedcodedFrame = nil;
+//    }
+    
+//    if(_imageBuffer != nil){
+        NSLog(@"release image buffer ");
+        CVPixelBufferRelease(_imageBuffer);
+        _imageBuffer = nil;
+//    }
+
+//    if(displayLink != nil){
+        NSLog(@"release cvdisplaylink");
+        CVDisplayLinkStop(displayLink);
+        CVDisplayLinkRelease(displayLink);
+        displayLink = nil;
+//    }
+    
+//    if(videoTextureCache != nil){
+        NSLog(@"release texture cache");
+        CVOpenGLTextureCacheRelease(videoTextureCache);
+        videoTextureCache = nil;
+//    }
+//    if(videoTextureRef != nil){
+        NSLog(@"release texture ref");
+        CVOpenGLTextureRelease(videoTextureRef);
+        videoTextureRef = nil;
+//    }
     
     [asyncLock unlock];
     
