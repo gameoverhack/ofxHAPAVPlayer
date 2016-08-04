@@ -10,21 +10,19 @@
 #import <OpenGL/OpenGL.h>
 #import <AVFoundation/AVFoundation.h>
 #import <HapInAVFoundation/HapInAVFoundation.h>
-//#include "ofxHAPAVPlayerInterOp.h"
-
 
 @interface ofxHAPAVPlayerDelegate : NSObject {
+    
     CVDisplayLinkRef			displayLink;
-    AVAsset                     * asset;
-    AVPlayer                    * player;
-	AVPlayerItem				* playerItem;
-    AVPlayerItemVideoOutput		* nativeAVFOutput;
-    AVPlayerItemHapDXTOutput	* hapOutput;
+    
+    AVAsset                     * _asset;
+    AVPlayer                    * _player;
+	AVPlayerItem				* _playerItem;
+    AVPlayerItemVideoOutput		* _nativeAVFOutput;
+    AVPlayerItemHapDXTOutput	* _hapOutput;
+    
     HapDecoderFrame             * _dedcodedFrame;
     CVImageBufferRef              _imageBuffer;
-    
-    CVOpenGLTextureCacheRef     videoTextureCache;
-    CVOpenGLTextureRef          videoTextureRef;
     
     NSLock* asyncLock;
     NSCondition* deallocCond;
@@ -37,14 +35,10 @@
     int _totalFrames;
     CMTime _duration;
     CMTime _minFrameDuration;
-    BOOL _bReady;
     BOOL _bLoaded;
+    BOOL _bLoading;
     BOOL _bFrameNeedsRender;
     BOOL _bHAPEncoded;
-    BOOL _bLoading;
-    id timeObserver;
-    
-    //ofxHAPAVPlayerInterOp * parent;
     
 }
 
@@ -53,20 +47,6 @@
 @property (strong, nonatomic) AVPlayerItem * playerItem;
 @property (strong, nonatomic) AVPlayerItemVideoOutput * nativeAVFOutput;
 @property (strong, nonatomic) AVPlayerItemHapDXTOutput * hapOutput;
-
-//@property (nonatomic, assign, readonly, getter = getDecodedFrame) HapDecoderFrame * dedcodedFrame;
-
-@property (nonatomic, assign) CVOpenGLTextureCacheRef     videoTextureCache;
-@property (nonatomic, assign) CVOpenGLTextureRef          videoTextureRef;
-
-//@property (nonatomic, assign, readonly, getter = isLoading) BOOL bLoaded;
-
-//@property (nonatomic, assign, readonly) float rate;
-//@property (nonatomic, assign) int currentFrame;
-//@property (nonatomic, assign, readonly) int totalFrames;
-//@property (nonatomic, assign, readonly) CMTime duration;
-
-//- (void) setParent:(ofxHAPAVPlayerInterOp*)_parent;
 
 - (void) load:(NSString *)path;
 
@@ -87,12 +67,6 @@
 - (int) getTotalNumFrames;
 - (CMTime) getDuration;
 - (BOOL) isLoaded;
-
-//- (AVPlayer*) getPlayer;
-//- (AVPlayerItemVideoOutput*) getAVFOutput;
-//- (AVPlayerItemHapDXTOutput*) getHAPOutput;
-- (CVOpenGLTextureCacheRef) getTextureCacheRef;
-- (CVOpenGLTextureRef) getTextureRef;
 
 - (CVImageBufferRef) getAVFDecodedFrame;
 - (HapDecoderFrame*) getHAPDecodedFrame;

@@ -35,6 +35,11 @@ static NSString * const kRateKey = @"rate";
 static const void *ItemStatusContext = &ItemStatusContext;
 static const void *PlayerRateContext = &ItemStatusContext;
 
+@synthesize player = _player;
+@synthesize asset = _asset;
+@synthesize playerItem = _playerItem;
+@synthesize hapOutput = _hapOutput;
+@synthesize nativeAVFOutput = _nativeAVFOutput;
 
 - (id) init	{
     
@@ -43,10 +48,6 @@ static const void *PlayerRateContext = &ItemStatusContext;
     asyncLock = [[NSLock alloc] init];
     
     self.player = [[AVPlayer alloc] init];
-    //[self.player autorelease];
-    
-    //[self.player setActionAtItemEnd:AVPlayerActionAtItemEndPause];
-    //_rate = 1.0;
     
     //	make the displaylink, which will drive rendering
     CVReturn				err = kCVReturnSuccess;
@@ -78,49 +79,31 @@ static const void *PlayerRateContext = &ItemStatusContext;
 //---------------------------------------------------------- cleanup / dispose.
 - (void)dealloc
 {
+    
+    [asyncLock lock];
 
+    //NSLog(@"release cvdisplaylink");
+    CVDisplayLinkStop(displayLink);
+    CVDisplayLinkRelease(displayLink);
+    displayLink = nil;
+    
+    [asyncLock unlock];
+    
     if (self.player != nil){
         [self unloadVideo];
     }
     
     [asyncLock lock];
-    
-//    if(_dedcodedFrame != nil){
-        NSLog(@"release dxt frame");
-        [_dedcodedFrame release];
-        _dedcodedFrame = nil;
-//    }
-    
-//    if(_imageBuffer != nil){
-        NSLog(@"release image buffer ");
-        CVPixelBufferRelease(_imageBuffer);
-        _imageBuffer = nil;
-//    }
 
-//    if(displayLink != nil){
-        NSLog(@"release cvdisplaylink");
-        CVDisplayLinkStop(displayLink);
-        CVDisplayLinkRelease(displayLink);
-        displayLink = nil;
-//    }
-    
-//    if(videoTextureCache != nil){
-        NSLog(@"release texture cache");
-        CVOpenGLTextureCacheRelease(videoTextureCache);
-        videoTextureCache = nil;
-//    }
-//    if(videoTextureRef != nil){
-        NSLog(@"release texture ref");
-        CVOpenGLTextureRelease(videoTextureRef);
-        videoTextureRef = nil;
-//    }
-    
+    //NSLog(@"release dxt frame");
+    [_dedcodedFrame release];
+    _dedcodedFrame = nil;
+
+    //NSLog(@"release image buffer ");
+    CVPixelBufferRelease(_imageBuffer);
+    _imageBuffer = nil;
+
     [asyncLock unlock];
-    
-
-//    [asyncLock lock];
-//    
-//    [asyncLock unlock];
     
     // release locks
     [asyncLock autorelease];
@@ -130,7 +113,7 @@ static const void *PlayerRateContext = &ItemStatusContext;
         deallocCond = nil;
     }
     
-    NSLog(@"dealloc kill");
+    //NSLog(@"dealloc kill");
     
     [super dealloc];
     
@@ -165,12 +148,6 @@ static const void *PlayerRateContext = &ItemStatusContext;
     //__block id currentTimeObserver = timeObserver;
     __block AVPlayerItemVideoOutput* currentAVFVideoOutput = self.nativeAVFOutput;
     __block AVPlayerItemHapDXTOutput* currentHAPVideoOutput = self.hapOutput;
-    //    __block CVPixelBufferRef currentImageBuffer = _imageBuffer;
-    //    __block HapDecoderFrame* currentDTXFrame = _dedcodedFrame;
-    
-    //    __block CVDisplayLinkRef currentDisplayLinkRef = displayLink;
-    //    __block CVOpenGLTextureCacheRef currentVideoTextureCache = videoTextureCache;
-    //    __block CVOpenGLTextureRef currentVideoTextureRef = videoTextureRef;
     
     //set all to nil
     //cleanup happens in the block
@@ -191,67 +168,25 @@ static const void *PlayerRateContext = &ItemStatusContext;
     _hapOutput = nil;
     self.hapOutput = nil;
     
-    //    _imageBuffer = nil;
-    //    _dedcodedFrame = nil;
-    
-    //    displayLink = nil;
-    //
-    //    self.videoTextureCache = nil;
-    //    videoTextureCache = nil;
-    //
-    //    self.videoTextureRef = nil;
-    //    videoTextureRef = nil;
-    
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         
         @autoreleasepool {
             
             [asyncLock lock];
             
-//            if(currentDTXFrame != nil){
-//                NSLog(@"release dxt frame");
-//                [currentDTXFrame release];
-//                currentDTXFrame = nil;
-//            }
-//
-//            if(currentImageBuffer != nil){
-//                NSLog(@"release image buffer ");
-//                CVPixelBufferRelease(currentImageBuffer);
-//                currentImageBuffer = nil;
-//            }
-
-//            if(currentDisplayLinkRef != nil){
-//                NSLog(@"release cvdisplaylink");
-//                CVDisplayLinkStop(currentDisplayLinkRef);
-//                CVDisplayLinkRelease(currentDisplayLinkRef);
-//                currentDisplayLinkRef = nil;
-//            }
-//
-//            if(currentVideoTextureCache != nil){
-//                NSLog(@"release texture cache");
-//                CVOpenGLTextureCacheRelease(currentVideoTextureCache);
-//                currentVideoTextureCache = nil;
-//            }
-//            if(currentVideoTextureRef != nil){
-//                NSLog(@"release texture ref");
-//                CVOpenGLTextureRelease(currentVideoTextureRef);
-//                currentVideoTextureRef = nil;
-//            }
-            
             _bFrameNeedsRender = NO;
             
             // release asset
             if (currentAsset != nil) {
-                NSLog(@"release asset");
+                //NSLog(@"release asset");
                 [currentAsset cancelLoading];
                 [currentAsset autorelease];
                 currentAsset = nil;
             }
-            
-            
+
             // release current player item
             if(currentItem != nil) {
-                NSLog(@"release playerItem");
+                //NSLog(@"release playerItem");
                 [currentItem cancelPendingSeeks];
                 //[currentItem removeObserver:self forKeyPath:kStatusKey context:&ItemStatusContext];
                 
@@ -261,7 +196,7 @@ static const void *PlayerRateContext = &ItemStatusContext;
                                             object:currentItem];
                 
                 if(currentHAPVideoOutput != nil){
-                    NSLog(@"release hap output");
+                    //NSLog(@"release hap output");
                     // remove output
                     [currentItem removeOutput:currentHAPVideoOutput];
                     
@@ -274,7 +209,7 @@ static const void *PlayerRateContext = &ItemStatusContext;
                 }
                 
                 if(currentAVFVideoOutput != nil){
-                    NSLog(@"release native output");
+                    //NSLog(@"release native output");
                     // remove output
                     [currentItem removeOutput:currentAVFVideoOutput];
                     
@@ -293,7 +228,7 @@ static const void *PlayerRateContext = &ItemStatusContext;
 
             // destroy current player
             if (currentPlayer != nil) {
-                NSLog(@"release player");
+                //NSLog(@"release player");
                 //[currentPlayer removeObserver:self forKeyPath:kRateKey context:&PlayerRateContext];
                 
 //                if (currentTimeObserver != nil) {
@@ -301,6 +236,7 @@ static const void *PlayerRateContext = &ItemStatusContext;
 //                    [currentTimeObserver release];
 //                    currentTimeObserver = nil;
 //                }
+                
                 [currentPlayer replaceCurrentItemWithPlayerItem:nil];
                 [currentPlayer autorelease];
                 currentPlayer = nil;
@@ -313,26 +249,16 @@ static const void *PlayerRateContext = &ItemStatusContext;
                 [deallocCond signal];
                 [deallocCond unlock];
             }
-            NSLog(@"there kill");
+            
         }
     });
     
-    NSLog(@"here kill");
-
-
-
 }
 
 - (void) load:(NSString *)path{
 
-    NSLog(@"yeah kill");
-
     _bLoaded = false;
-    
-    //NSLog(@"%s %@",__func__,path);
-    
-	//	make url
-	NSURL *url = (path==nil) ? nil : [NSURL fileURLWithPath:path];
+    _bLoading = true;
     
     if (self.asset != nil) {
         [self.asset cancelLoading];
@@ -340,35 +266,19 @@ static const void *PlayerRateContext = &ItemStatusContext;
     
     // make asset
     NSDictionary *options = @{(id)AVURLAssetPreferPreciseDurationAndTimingKey:@(YES)};
-    self.asset = (url==nil) ? nil : [AVURLAsset URLAssetWithURL:url options:options];
+    self.asset = [AVURLAsset URLAssetWithURL:[NSURL fileURLWithPath:path] options:options];
     
     // error check url and asset creation
     if(self.asset == nil) {
-        NSLog(@"error loading asset: %@", [url description]);
-        return;
-        //return NO;
-    }
-    
-    // for now always async
-    BOOL bAsync = YES;
-    
-    // setup dispatch queue
-    dispatch_semaphore_t sema = dispatch_semaphore_create(0);
-    dispatch_queue_t queue;
-    if(bAsync == YES){
-        queue = dispatch_get_main_queue();
-    } else {
-        queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+        NSLog(@"error loading asset: %@", [[NSURL fileURLWithPath:path] description]);
+        return NO;
     }
 
+    dispatch_semaphore_t sema = dispatch_semaphore_create(0);
+    
     // dispatch the queue
-    dispatch_async(queue, ^{
+    dispatch_async(dispatch_get_main_queue(), ^{
         [self.asset loadValuesAsynchronouslyForKeys:[NSArray arrayWithObject:kTracksKey] completionHandler:^{
-            
-//            if(self.player == nil){
-//                self.player = [[AVPlayer alloc] init];
-//                //[self.player setActionAtItemEnd:AVPlayerActionAtItemEndPause];
-//            }
             
             double startTime = getTickCount();
             
@@ -377,64 +287,28 @@ static const void *PlayerRateContext = &ItemStatusContext;
             
             if(status != AVKeyValueStatusLoaded) {
                 NSLog(@"error loading asset tracks: %@", [error localizedDescription]);
-                // reset
-                //bReady = false;//_bReady;
-                _bLoaded = false;//_bLoaded;
-                //bPlayStateBeforeLoad = _bPlayStateBeforeLoad;
-                if(bAsync == NO){
-                    dispatch_semaphore_signal(sema);
-                }
+                _bLoaded = false;
                 return;
             }
-            
-            _duration = [self.asset duration];
-            
+
             if(CMTimeCompare(_duration, kCMTimeZero) == 0) {
                 NSLog(@"track loaded with zero duration.");
-                // reset
-                //bReady = false;//_bReady;
-                _bLoaded = false;//_bLoaded;
-                //bPlayStateBeforeLoad = _bPlayStateBeforeLoad;
-                if(bAsync == NO){
-                    dispatch_semaphore_signal(sema);
-                }
+                _bLoaded = false;
                 return;
             }
             
             NSArray * videoTracks = [self.asset tracksWithMediaType:AVMediaTypeVideo];
             if([videoTracks count] == 0) {
                 NSLog(@"no video tracks found.");
-                // reset
-                //bReady = false;//_bReady;
-                _bLoaded = false;//_bLoaded;
-                //bPlayStateBeforeLoad = _bPlayStateBeforeLoad;
-                if(bAsync == NO){
-                    dispatch_semaphore_signal(sema);
-                }
+                _bLoaded = false;;
                 return;
             }
             
             [asyncLock lock];
-            
-//            if (_bIsUnloaded) {
-//                NSLog(@"Unload error");
-//                // player was unloaded before we could load everting
-//                _bIsUnloaded = NO;
-//                if(bAsync == NO){
-//                    dispatch_semaphore_signal(sema);
-//                }
-//                [asyncLock unlock];
-//                return;
-//            }
-            
-            _bLoading = YES;
-            
-            
-            // create asset reader
-            // do we need one here? Lukasz does this and seems to maybe have something to do with time?
 
             if (self.playerItem != nil){
                 [self.playerItem cancelPendingSeeks];
+                
                 //unregister as an observer for the "old" item's play-to-end notifications
                 [[NSNotificationCenter defaultCenter] removeObserver:self
                                                                 name:AVPlayerItemDidPlayToEndTimeNotification
@@ -442,7 +316,7 @@ static const void *PlayerRateContext = &ItemStatusContext;
             }
             
             //	make a player item
-            self.playerItem = [AVPlayerItem playerItemWithAsset:self.asset];
+            self.playerItem = [AVPlayerItem playerItemWithAsset:self.asset]; // I think this leaks on ctor/dtor
             
             if (self.playerItem == nil)	{
                 NSLog(@"\t\terr: couldn't make AVPlayerItem in %s",__func__);
@@ -452,6 +326,7 @@ static const void *PlayerRateContext = &ItemStatusContext;
             // get info from track (assume just one video track at position 0 - is this wise?
             // otherwise use: for (AVAssetTrack *trackPtr in videoTracks) etc....
             AVAssetTrack * videoTrack = videoTracks.firstObject;
+            _duration = [self.asset duration];
             _frameRate = videoTrack.nominalFrameRate;
             _videoWidth = [videoTrack naturalSize].width;
             _videoHeight = [videoTrack naturalSize].height;
@@ -544,10 +419,6 @@ static const void *PlayerRateContext = &ItemStatusContext;
                 _bLoading = NO;
                 _bFrameNeedsRender = NO;
                 
-                if(bAsync == NO){
-                    dispatch_semaphore_signal(sema);
-                }
-                
                 [asyncLock unlock];
                 
                 [self.player seekToTime:kCMTimeZero];
@@ -556,31 +427,9 @@ static const void *PlayerRateContext = &ItemStatusContext;
             
         }];
     });
-    
-    if (_videoTextureCache == nil) {
-        CVReturn err = CVOpenGLTextureCacheCreate(kCFAllocatorDefault,
-                                                  nullptr,
-                                                  CGLGetCurrentContext(),
-                                                  CGLGetPixelFormat(CGLGetCurrentContext()),
-                                                  nullptr,
-                                                  &_videoTextureCache);
-        
-        if (err != noErr) {
-            NSLog(@"Error at CVOpenGLTextureCacheCreate %d", err);
-        }
-        
-    }
-    
-    
-    // Wait for the dispatch semaphore signal
-    if(bAsync == NO){
-        dispatch_semaphore_wait(sema, DISPATCH_TIME_FOREVER);
-        dispatch_release(sema);
-        return _bLoaded;
-    } else {
-        dispatch_release(sema);
-        return YES;
-    }
+
+    dispatch_release(sema);
+    return YES;
     
 }
 
@@ -675,27 +524,15 @@ static const void *PlayerRateContext = &ItemStatusContext;
     return self.hapOutput;
 }
 
-- (CVOpenGLTextureCacheRef) getTextureCacheRef{
-    return self.videoTextureCache;
-}
-
-- (CVOpenGLTextureRef) getTextureRef{
-    return self.videoTextureRef;
-}
-
 - (BOOL) isLoaded{
     return _bLoaded;
 }
 
 - (void) renderCallback	{
-    //NSLog(@"Displaylink!");
-    [asyncLock lock];
     
-    if(deallocCond != nil){
-        [asyncLock unlock];
-        _bFrameNeedsRender = NO;
-        return;
-    }
+    //NSLog(@"Displaylink!");
+    
+    [asyncLock lock];
     
     if(_bFrameNeedsRender == YES){
         [asyncLock unlock];
@@ -737,7 +574,9 @@ static const void *PlayerRateContext = &ItemStatusContext;
             CVPixelBufferRelease(imageBuffer);
         }
     }
+    
     [asyncLock unlock];
+    
 }
 
 - (BOOL) isFrameReadyToRender{

@@ -107,6 +107,9 @@ protected:
     void * delegate;
 #endif
     
+    CVOpenGLTextureCacheRef     videoTextureCache = nullptr;
+    CVOpenGLTextureRef          videoTextureRef = nullptr;
+    
 };
 
 #endif

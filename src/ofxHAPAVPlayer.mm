@@ -62,6 +62,17 @@ void ofxHAPAVPlayer::close(){
         });
 
         delegate = nil;
+        
+        if(videoTextureCache != nullptr){
+            CVOpenGLTextureCacheRelease(videoTextureCache);
+            videoTextureCache = nullptr;
+        }
+        if(videoTextureRef != nullptr){
+            CVOpenGLTextureRelease(videoTextureRef);
+            videoTextureRef = nullptr;
+        }
+        
+        
     }
 
     bFrameNew = false;
@@ -70,8 +81,6 @@ void ofxHAPAVPlayer::close(){
 
 //--------------------------------------------------------------
 void ofxHAPAVPlayer::load(string path){
-    
-    int startTime = ofGetElapsedTimeMillis();
 
     @autoreleasepool {
         if(delegate == nil){
@@ -83,17 +92,27 @@ void ofxHAPAVPlayer::load(string path){
                 internalFormats[i] = 0;
             }
             bNeedsShader = false;
-            
         }
         
+    }
+    
+    if (videoTextureCache == nil) {
+        CVReturn err = CVOpenGLTextureCacheCreate(kCFAllocatorDefault,
+                                                  nullptr,
+                                                  CGLGetCurrentContext(),
+                                                  CGLGetPixelFormat(CGLGetCurrentContext()),
+                                                  nullptr,
+                                                  &videoTextureCache);
+        
+        if (err != noErr) {
+            ofLogError() << "Error at CVOpenGLTextureCacheCreate " << err;
+        }
     }
     
     bFrameNew = false;
     NSString *nsPath = [NSString stringWithCString:path.c_str() encoding:[NSString defaultCStringEncoding]];
     [delegate load:nsPath];
     
-    int elapsedTime = ofGetElapsedTimeMillis() - startTime;
-//    cout << "Time B: " << elapsedTime << endl;
 }
 
 //--------------------------------------------------------------
@@ -153,16 +172,6 @@ float ofxHAPAVPlayer::getHeight() const{
     if(delegate == nil) return 0;
     return [delegate getHeight];
 }
-
-////--------------------------------------------------------------
-//void ofxHAPAVPlayer::renderFrame(){
-//    
-//    if(![delegate isLoaded]) return;
-//    
-//    bFrameNew = false;
-//    
-//    
-//}
 
 //--------------------------------------------------------------
 void ofxHAPAVPlayer::update(){
@@ -270,7 +279,8 @@ void ofxHAPAVPlayer::update(){
                     
                     GLvoid		*baseAddress = dxtBaseAddresses[texIndex];
                     if(baseAddress == NULL) return;
-                    // Create a new texture if our current one isn't adequate
+                    
+                    // Create a new texture/shader if our current one isn't adequate
                     
                     if(bNeedsShader && !shader.isLoaded()){
                         bool ok = shader.setupShaderFromSource(GL_VERTEX_SHADER, ofxHAPAVPlayerVertexShader);
@@ -335,9 +345,7 @@ void ofxHAPAVPlayer::update(){
             
         }else{ // is AVFoundation encoded
             
-            
-            CVOpenGLTextureCacheRef _videoTextureCache = [delegate getTextureCacheRef];
-            CVOpenGLTextureRef _videoTextureRef = [delegate getTextureRef];
+            if(videoTextureCache == nil) return;
             
             CVImageBufferRef imageBuffer = [delegate getAVFDecodedFrame];
             
@@ -359,12 +367,12 @@ void ofxHAPAVPlayer::update(){
                 }
                 
                 CVReturn err = CVOpenGLTextureCacheCreateTextureFromImage(nullptr,
-                                                                          _videoTextureCache,
+                                                                          videoTextureCache,
                                                                           imageBuffer,
                                                                           nullptr,
-                                                                          &_videoTextureRef);
+                                                                          &videoTextureRef);
                 
-                unsigned int textureCacheID = CVOpenGLTextureGetName(_videoTextureRef);
+                unsigned int textureCacheID = CVOpenGLTextureGetName(videoTextureRef);
                 
                 videoTextures[0].setUseExternalTextureID(textureCacheID);
                 if(ofIsGLProgrammableRenderer() == false) {
@@ -378,14 +386,14 @@ void ofxHAPAVPlayer::update(){
                 
                 CVPixelBufferUnlockBaseAddress(imageBuffer, kCVPixelBufferLock_ReadOnly);
                 
-                CVOpenGLTextureCacheFlush(_videoTextureCache, 0);
+                CVOpenGLTextureCacheFlush(videoTextureCache, 0);
                 
-                if(_videoTextureRef) {
-                    CVOpenGLTextureRelease(_videoTextureRef);
-                    _videoTextureRef = nil;
+                if(videoTextureRef) {
+                    CVOpenGLTextureRelease(videoTextureRef);
+                    videoTextureRef = nil;
                 }
                 
-                //CVPixelBufferRelease(imageBuffer);
+                //CVPixelBufferRelease(imageBuffer); // we do this in the CVDisplayLink renderCallback
                 
             }
             
@@ -415,6 +423,7 @@ void ofxHAPAVPlayer::draw(const ofRectangle & rect){
 //--------------------------------------------------------------
 void ofxHAPAVPlayer::draw(float x, float y, float w, float h){
     if(delegate == nil) return;
+    if(bNeedsShader && !shader.isLoaded()) return;
     ofPushMatrix();
     ofTranslate(x, y);
     ofScale(w / getWidth(), h / getHeight());
