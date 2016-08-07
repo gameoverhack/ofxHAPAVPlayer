@@ -72,13 +72,7 @@ static const void *PlayerRateContext = &ItemStatusContext;
 	return self;
 }
 
-//- (void) setParent:(ofxHAPAVPlayerInterOp*)_parent{
-//    parent = _parent;
-//}
-
-//---------------------------------------------------------- cleanup / dispose.
-- (void)dealloc
-{
+- (void)dealloc {
     
     [asyncLock lock];
 
@@ -113,8 +107,6 @@ static const void *PlayerRateContext = &ItemStatusContext;
         deallocCond = nil;
     }
     
-    //NSLog(@"dealloc kill");
-    
     [super dealloc];
     
 }
@@ -128,7 +120,7 @@ static const void *PlayerRateContext = &ItemStatusContext;
     // unload current video
     [self close];
     
-    // wait for unloadVideoAsync to finish
+    // wait for close to finish
     [deallocCond wait];
     [deallocCond unlock];
     
@@ -307,7 +299,7 @@ static const void *PlayerRateContext = &ItemStatusContext;
             }
             
             [asyncLock lock];
-
+            
             if (self.playerItem != nil){
                 [self.playerItem cancelPendingSeeks];
                 
@@ -561,7 +553,6 @@ static const void *PlayerRateContext = &ItemStatusContext;
         _dedcodedFrame = dxtFrame;
         if(_dedcodedFrame != nil){
             _bFrameNeedsRender = YES;
-            //parent->renderFrame();
         }else{
             _bFrameNeedsRender = NO;
         }
@@ -580,7 +571,6 @@ static const void *PlayerRateContext = &ItemStatusContext;
             _imageBuffer = imageBuffer;
             if(_imageBuffer != nil){
                 _bFrameNeedsRender = YES;
-                //parent->renderFrame();
             }else{
                 _bFrameNeedsRender = NO;
             }
