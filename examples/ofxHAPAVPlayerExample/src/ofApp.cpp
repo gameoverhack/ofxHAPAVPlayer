@@ -16,6 +16,7 @@ void ofApp::setup(){
     vidPtr = shared_ptr<ofxHAPAVPlayer>(new ofxHAPAVPlayer);
     vidPtr->load(dir.getPath(currentFileIndex));
     vidPtr->play();
+    vidPtr->setPosition(0.5);
     vidPtr->setSpeed(3.0);
     vidPtr->setLoopState(OF_LOOP_PALINDROME);
 }
@@ -67,7 +68,7 @@ void ofApp::keyReleased(int key){
                 vidPtr->setSpeed(3.0);
             }
             
-            cout << dir.getPath(currentFileIndex) << endl;
+            //cout << dir.getPath(currentFileIndex) << endl;
             
         }
             break;

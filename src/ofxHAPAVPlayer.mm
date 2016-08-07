@@ -487,10 +487,11 @@ float ofxHAPAVPlayer::getDuration() const{
     return [delegate getDuration];
 }
 
-////--------------------------------------------------------------
-//bool ofxHAPAVPlayer::getIsMovieDone() const{
-//    
-//}
+//--------------------------------------------------------------
+bool ofxHAPAVPlayer::getIsMovieDone() const{
+    if(delegate == nil) return false;
+    return [delegate isMovieDone];
+}
 
 //--------------------------------------------------------------
 void ofxHAPAVPlayer::setPaused(bool bPause){

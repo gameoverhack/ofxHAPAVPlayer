@@ -84,6 +84,7 @@ typedef enum{
 - (float) getPosition;
 - (float) getDuration;
 - (BOOL) isLoaded;
+- (BOOL) isMovieDone;
 
 - (CVImageBufferRef) getAVFDecodedFrame;
 - (HapDecoderFrame*) getHAPDecodedFrame;

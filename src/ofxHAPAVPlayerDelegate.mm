@@ -530,6 +530,17 @@ static void *ItemStatusContext = &ItemStatusContext;
     
 }
 
+- (BOOL) isMovieDone{
+    CMTime current_time = [self.playerItem currentTime];
+    if(_rate > 0){
+        return ::CMTimeCompare( current_time, _duration ) >= 0;
+    }else{
+        return !(::CMTimeCompare( current_time, kCMTimeZero ) > 0);
+    }
+    
+}
+
+
 - (void) play{
     if(!_bLoaded){
         _loadRate = 1.0f;
