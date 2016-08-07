@@ -6,6 +6,8 @@ Please note this is a work in progress. Most of the basic functionality of an of
 
 Emphasis has been put on making the player truly block-free on loading - it's aimed at installations and real-time AV software that needs fast, non-block loading and can handle a *lot* of video.
 
+On Mac OSX it is intended to become a replacement for ofxThreadedVideo: https://github.com/gameoverhack/ofxThreadedVideo
+
 On my MacBook Pro (Early 2013, El Capitan 10.11.5) I can get approximately 200+ 100 x 100 videos or 15+ 1920 x 1080 videos playing smoothly whilst still loading a new video and seeking to a random frame every 40 milliseconds.
 
 To encode your video with HAP download the codec from: https://github.com/vidvox/hap-qt-codec/releases/

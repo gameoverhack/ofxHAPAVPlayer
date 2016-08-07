@@ -5,28 +5,21 @@
   },
   "DVTSourceControlWorkspaceBlueprintWorkingCopyStatesKey" : {
     "8671D5E53E4C4F4D77CFBBE6EE595FBE78BE011E" : 0,
-    "2DE9C8846D9375EAACFABA8963120E8E7719BAF5" : 0,
-    "55505DE6675E1AEB4CF72AD63A972936EC984D97" : 0
+    "2DE9C8846D9375EAACFABA8963120E8E7719BAF5" : 0
   },
-  "DVTSourceControlWorkspaceBlueprintIdentifierKey" : "E583EA83-E90E-478D-9B58-B86182EFB3F0",
+  "DVTSourceControlWorkspaceBlueprintIdentifierKey" : "24C28278-7E5A-4DFC-89DF-253F505129D4",
   "DVTSourceControlWorkspaceBlueprintWorkingCopyPathsKey" : {
     "8671D5E53E4C4F4D77CFBBE6EE595FBE78BE011E" : "ofxHAPAVPlayer\/",
-    "2DE9C8846D9375EAACFABA8963120E8E7719BAF5" : "..",
-    "55505DE6675E1AEB4CF72AD63A972936EC984D97" : "ofxImGui\/"
+    "2DE9C8846D9375EAACFABA8963120E8E7719BAF5" : ".."
   },
-  "DVTSourceControlWorkspaceBlueprintNameKey" : "ofxHAPAVPlayer_example",
+  "DVTSourceControlWorkspaceBlueprintNameKey" : "ofxHAPAVPlayerExample",
   "DVTSourceControlWorkspaceBlueprintVersion" : 204,
-  "DVTSourceControlWorkspaceBlueprintRelativePathToProjectKey" : "ofxHAPAVPlayer_example\/ofxHAPAVPlayer_example.xcodeproj",
+  "DVTSourceControlWorkspaceBlueprintRelativePathToProjectKey" : "examples\/ofxHAPAVPlayerExample\/ofxHAPAVPlayerExample.xcodeproj",
   "DVTSourceControlWorkspaceBlueprintRemoteRepositoriesKey" : [
     {
       "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "github.com:gameoverhack\/openFrameworks.git",
       "DVTSourceControlWorkspaceBlueprintRemoteRepositorySystemKey" : "com.apple.dt.Xcode.sourcecontrol.Git",
       "DVTSourceControlWorkspaceBlueprintRemoteRepositoryIdentifierKey" : "2DE9C8846D9375EAACFABA8963120E8E7719BAF5"
-    },
-    {
-      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "https:\/\/github.com\/jvcleave\/ofxImGui.git",
-      "DVTSourceControlWorkspaceBlueprintRemoteRepositorySystemKey" : "com.apple.dt.Xcode.sourcecontrol.Git",
-      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryIdentifierKey" : "55505DE6675E1AEB4CF72AD63A972936EC984D97"
     },
     {
       "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "github.com:gameoverhack\/ofxHAPAVPlayer.git",

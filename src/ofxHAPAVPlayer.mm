@@ -69,9 +69,9 @@ void ofxHAPAVPlayer::load(string path){
             ofLogError() << "Error at CVOpenGLTextureCacheCreate " << err;
         }
     }
-    
+    cout << ofToDataPath(path) << endl;
     bFrameNew = false;
-    NSString *nsPath = [NSString stringWithCString:path.c_str() encoding:[NSString defaultCStringEncoding]];
+    NSString *nsPath = [NSString stringWithCString:ofToDataPath(path).c_str() encoding:[NSString defaultCStringEncoding]];
     [delegate load:nsPath];
     
 }

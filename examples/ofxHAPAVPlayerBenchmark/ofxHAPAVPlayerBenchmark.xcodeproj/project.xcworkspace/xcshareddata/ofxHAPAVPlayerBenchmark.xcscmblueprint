@@ -7,14 +7,14 @@
     "8671D5E53E4C4F4D77CFBBE6EE595FBE78BE011E" : 0,
     "2DE9C8846D9375EAACFABA8963120E8E7719BAF5" : 0
   },
-  "DVTSourceControlWorkspaceBlueprintIdentifierKey" : "E583EA83-E90E-478D-9B58-B86182EFB3F0",
+  "DVTSourceControlWorkspaceBlueprintIdentifierKey" : "EC3E465E-5587-4748-8337-99970F5FA974",
   "DVTSourceControlWorkspaceBlueprintWorkingCopyPathsKey" : {
     "8671D5E53E4C4F4D77CFBBE6EE595FBE78BE011E" : "ofxHAPAVPlayer\/",
     "2DE9C8846D9375EAACFABA8963120E8E7719BAF5" : ".."
   },
-  "DVTSourceControlWorkspaceBlueprintNameKey" : "ofxHAPAVPlayer_example",
+  "DVTSourceControlWorkspaceBlueprintNameKey" : "ofxHAPAVPlayerBenchmark",
   "DVTSourceControlWorkspaceBlueprintVersion" : 204,
-  "DVTSourceControlWorkspaceBlueprintRelativePathToProjectKey" : "ofxHAPAVPlayer_example_multiloader\/ofxHAPAVPlayer_example.xcodeproj",
+  "DVTSourceControlWorkspaceBlueprintRelativePathToProjectKey" : "examples\/ofxHAPAVPlayerBenchmark\/ofxHAPAVPlayerBenchmark.xcodeproj",
   "DVTSourceControlWorkspaceBlueprintRemoteRepositoriesKey" : [
     {
       "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "github.com:gameoverhack\/openFrameworks.git",

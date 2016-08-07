@@ -6,9 +6,9 @@
 ################################################################################
 # OF ROOT
 #   The location of your root openFrameworks installation
-#       (default) OF_ROOT = ../../.. 
+#       (default) OF_ROOT = ../../../../../../../../Volumes/GhostDriver/Users/gameover/Code/openFrameworks 
 ################################################################################
-# OF_ROOT = ../../..
+# OF_ROOT = ../../../../../../../../Volumes/GhostDriver/Users/gameover/Code/openFrameworks
 
 ################################################################################
 # PROJECT ROOT

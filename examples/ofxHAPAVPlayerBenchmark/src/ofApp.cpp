@@ -7,12 +7,12 @@ void ofApp::setup(){
     ofSetVerticalSync(false);
     ofBackground(0);
     
-    vid.load("/Users/gameover/Code/openFrameworks/addons/ofxHAPAVPlayer/ofxHAPAVPlayer_example/bin/data/SampleHap.mov");
+    vid.load("../../../ofxHAPAVPlayerExample/bin/data/SampleHap.mov");
     vid.play();
     vid.setSpeed(1.0);
     
     dir.allowExt("mov");
-    dir.listDir(ofToDataPath("/Users/gameover/Desktop/LAF/hap")); //mediasmall/BLADIMIRSL
+    dir.listDir(""); //ofToDataPath("/Users/gameover/Desktop/LAF/hap")
 
     maxPlayers = 220;
     videos.resize(maxPlayers);
@@ -42,7 +42,9 @@ void ofApp::update(){
     }
     
     if(!bRandomize) return;
+    
     if(ofGetElapsedTimeMillis() - lastTime > 40){ // every 40 millis!
+        
         if(numLoaded < maxPlayers){
             videos[numLoaded].load(dir.getPath((int)ofRandom(dir.size())));
             videos[numLoaded].play();
@@ -50,21 +52,13 @@ void ofApp::update(){
             numLoaded++;
         }
         
-//        if(ofGetFrameRate() > 50){
-//            maxPlayers++;
-//            videos.resize(maxPlayers);
-//            videos[maxPlayers - 1].load(dir.getPath(ofRandom(dir.size())));
-//            videos[maxPlayers - 1].play();
-//            videos[maxPlayers - 1].setSpeed(3.0);
-//        }else{
-            int i = (int)ofRandom(maxPlayers);
-            videos[i].load(dir.getPath(ofRandom(dir.size())));
-            videos[i].play();
-            videos[i].setSpeed(3.0);
-            i = (int)ofRandom(maxPlayers);
-            videos[i].setFrame((int)ofRandom(videos[i].getTotalNumFrames()));
-            lastTime = ofGetElapsedTimeMillis();
-//        }
+        int i = (int)ofRandom(maxPlayers);
+        videos[i].load(dir.getPath(ofRandom(dir.size())));
+        videos[i].play();
+        videos[i].setSpeed(3.0);
+        i = (int)ofRandom(maxPlayers);
+        videos[i].setFrame((int)ofRandom(videos[i].getTotalNumFrames()));
+        lastTime = ofGetElapsedTimeMillis();
         
     }
     
@@ -128,66 +122,6 @@ void ofApp::keyReleased(int key){
             break;
     }
     
-//    }
-//    switch (key) {
-//        case ' ':
-//        {
-//            currentFileIndex++;
-//            if(currentFileIndex == dir.size()) currentFileIndex = 0;
-//            vid.load(dir.getPath(currentFileIndex));
-//            vid.play();
-//        }
-//            break;
-//        case 'r':
-//            vid.setFrame(0);
-//            break;
-//        case 't':
-//            vid.setFrame(vid.getCurrentFrame() + 1);
-//            break;
-//        case 'p':
-//        {
-//            vid.play();
-//        }
-//            break;
-//        case 's':
-//        {
-//            vid.stop();
-//        }
-//            break;
-//        case 'b':
-//        {
-//            cout << "here" << endl;
-//            vid.setPaused(true);
-//        }
-//            break;
-//        case 'n':
-//        {
-//            vid.setPaused(false);
-//        }
-//            break;
-//        case '1':
-//        {
-//            vid.setSpeed(+1.0);
-//        }
-//            break;
-//        case '2':
-//        {
-//            vid.setSpeed(+2.0);
-//        }
-//            break;
-//        case '3':
-//        {
-//            vid.setSpeed(-1.0);
-//        }
-//            break;
-//        case '4':
-//        {
-//            vid.setSpeed(-2.0);
-//        }
-//            break;
-//        default:
-//            break;
-//    }
 }
 
 //--------------------------------------------------------------
