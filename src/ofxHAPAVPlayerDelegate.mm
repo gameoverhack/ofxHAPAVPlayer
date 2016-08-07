@@ -445,6 +445,7 @@ static void *ItemStatusContext = &ItemStatusContext;
                 
                 break;
             case AVPlayerItemStatusReadyToPlay:
+                
                 [asyncLock lock];
                 
                 _bLoaded = YES;
@@ -467,6 +468,8 @@ static void *ItemStatusContext = &ItemStatusContext;
                 }else{
                     [self.player setRate:_rate]; // load paused?
                 }
+                
+                // preroll doesn't seem to work on native avf video output ?????
 //                [self.player prerollAtRate:1.0 completionHandler:^(BOOL finished){
 //                    if (finished) {
 //                        
@@ -566,10 +569,8 @@ static void *ItemStatusContext = &ItemStatusContext;
 - (void)setFrame:(int)frame {
 
     if(!_bLoaded){
-        NSLog(@"load frame %i", frame);
         _loadFrame = frame;
     }else{
-        NSLog(@"setframe %i", frame);
         float position = (float)frame / (float)_totalFrames;
         [self setPosition:position];
     }
