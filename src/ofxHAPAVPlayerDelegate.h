@@ -11,6 +11,12 @@
 #import <AVFoundation/AVFoundation.h>
 #import <HapInAVFoundation/HapInAVFoundation.h>
 
+typedef enum{
+    LOOP_NONE=0x01,
+    LOOP_PALINDROME=0x02,
+    LOOP_NORMAL=0x03
+} LoopType;
+
 @interface ofxHAPAVPlayerDelegate : NSObject {
     
     CVDisplayLinkRef			displayLink;
@@ -46,6 +52,8 @@
     BOOL _bFrameNeedsRender;
     BOOL _bHAPEncoded;
     
+    LoopType loopType;
+    
     //CMTime _minFrameDuration;
     
 }
@@ -59,12 +67,14 @@
 - (void) load:(NSString *)path;
 
 - (void) play;
+- (void) stop;
+- (void) close;
 - (void) setPaused:(BOOL)bPaused;
 - (void) setSpeed:(float)speed;
 - (void) setPosition:(float)position;
 - (void) setFrame:(int)frame;
-- (void) stop;
-- (void) close;
+- (void) setLoopType:(LoopType)state;
+- (LoopType) getLoopType;
 
 - (NSInteger) getWidth;
 - (NSInteger) getHeight;

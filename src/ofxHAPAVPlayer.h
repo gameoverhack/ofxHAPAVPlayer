@@ -90,6 +90,8 @@ protected:
     bool bFrameNew;
     bool bNeedsShader;
     
+    ofLoopType loopType;
+    
     ofPixels pixels;
     ofPixelFormat pixelFormat;
 

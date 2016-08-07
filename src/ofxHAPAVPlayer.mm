@@ -53,6 +53,7 @@ void ofxHAPAVPlayer::load(string path){
                 internalFormats[i] = 0;
             }
             bNeedsShader = false;
+            setLoopState(OF_LOOP_NORMAL);
         }
         
     }
@@ -69,8 +70,9 @@ void ofxHAPAVPlayer::load(string path){
             ofLogError() << "Error at CVOpenGLTextureCacheCreate " << err;
         }
     }
-    cout << ofToDataPath(path) << endl;
+    
     bFrameNew = false;
+    
     NSString *nsPath = [NSString stringWithCString:ofToDataPath(path).c_str() encoding:[NSString defaultCStringEncoding]];
     [delegate load:nsPath];
     
@@ -506,11 +508,12 @@ void ofxHAPAVPlayer::setPosition(float pct){
 //void ofxHAPAVPlayer::setVolume(float volume){
 //    
 //}
-//
-////--------------------------------------------------------------
-//void ofxHAPAVPlayer::setLoopState(ofLoopType state){
-//    
-//}
+
+//--------------------------------------------------------------
+void ofxHAPAVPlayer::setLoopState(ofLoopType state){
+    if(delegate == nil) return;
+    [delegate setLoopType:(LoopType)state];
+}
 
 //--------------------------------------------------------------
 void ofxHAPAVPlayer::setSpeed(float speed){
@@ -536,10 +539,11 @@ int	ofxHAPAVPlayer::getTotalNumFrames() const{
     return [delegate getTotalNumFrames];
 }
 
-////--------------------------------------------------------------
-//ofLoopType ofxHAPAVPlayer::getLoopState() const{
-//    
-//}
+//--------------------------------------------------------------
+ofLoopType ofxHAPAVPlayer::getLoopState() const{
+    if(delegate == nil) return OF_LOOP_NORMAL;
+    return (ofLoopType)[delegate getLoopType];
+}
 
 //--------------------------------------------------------------
 void ofxHAPAVPlayer::firstFrame(){

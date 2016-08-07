@@ -513,8 +513,21 @@ static void *ItemStatusContext = &ItemStatusContext;
 }
 
 - (void) itemDidPlayToEnd:(NSNotification *)note {
-    [self.player seekToTime:kCMTimeZero];
-    [self.player setRate:_rate];
+    
+    switch (loopType) {
+        case LOOP_NONE:
+            // nothing
+            break;
+        case LOOP_NORMAL:
+            [self.player seekToTime:kCMTimeZero];
+            [self.player setRate:_rate];
+            break;
+        case LOOP_PALINDROME:
+            [self setSpeed:-_rate];
+            break;
+    }
+    
+    
 }
 
 - (void) play{
@@ -629,6 +642,14 @@ static void *ItemStatusContext = &ItemStatusContext;
 
 - (BOOL) isLoaded{
     return _bLoaded;
+}
+
+- (void) setLoopType:(LoopType)state{
+    loopType = state;
+}
+
+- (LoopType) getLoopType{
+    return loopType;
 }
 
 - (void) renderCallback	{

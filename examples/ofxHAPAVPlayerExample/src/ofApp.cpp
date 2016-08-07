@@ -17,6 +17,7 @@ void ofApp::setup(){
     vidPtr->load(dir.getPath(currentFileIndex));
     vidPtr->play();
     vidPtr->setSpeed(3.0);
+    vidPtr->setLoopState(OF_LOOP_PALINDROME);
 }
 
 //--------------------------------------------------------------
