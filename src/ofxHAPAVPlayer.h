@@ -33,7 +33,6 @@ public:
     virtual ~ofxHAPAVPlayer();
     
     void load(string name);
-    //void loadAsync(string name);
     void close();
     void update();
     
@@ -49,6 +48,7 @@ public:
     void stop();
     
     bool isFrameNew() const;
+    void setUsePixels(bool bUsePixels);
     const ofPixels & getPixels() const;
     ofPixels & getPixels();
     ofTexture * getTexturePtr();
@@ -83,8 +83,6 @@ public:
     void nextFrame();
     void previousFrame();
     
-    //void renderFrame();
-    
 //    ofxHAPAVPlayer& operator=(ofxHAPAVPlayer other);
     
 protected:
@@ -94,7 +92,6 @@ protected:
     
     ofPixels pixels;
     ofPixelFormat pixelFormat;
-    //ofTexture videoTexture;
 
     ofTexture videoTextures[2];
     GLenum internalFormats[2];

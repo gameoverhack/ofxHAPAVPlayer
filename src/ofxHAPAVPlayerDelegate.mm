@@ -32,8 +32,7 @@ static NSString * const kTracksKey = @"tracks";
 static NSString * const kStatusKey = @"status";
 static NSString * const kRateKey = @"rate";
 
-static const void *ItemStatusContext = &ItemStatusContext;
-static const void *PlayerRateContext = &ItemStatusContext;
+static void *ItemStatusContext = &ItemStatusContext;
 
 @synthesize player = _player;
 @synthesize asset = _asset;
@@ -213,6 +212,7 @@ static const void *PlayerRateContext = &ItemStatusContext;
                     
                 }
                 
+                [currentItem removeObserver:self forKeyPath:@"status"];
                 [currentItem autorelease];
                 currentItem = nil;
                 
@@ -228,7 +228,7 @@ static const void *PlayerRateContext = &ItemStatusContext;
 //                    [currentTimeObserver release];
 //                    currentTimeObserver = nil;
 //                }
-                
+                [currentPlayer cancelPendingPrerolls];
                 [currentPlayer replaceCurrentItemWithPlayerItem:nil];
                 [currentPlayer autorelease];
                 currentPlayer = nil;
@@ -250,8 +250,10 @@ static const void *PlayerRateContext = &ItemStatusContext;
 - (void) load:(NSString *)path{
 
     _bLoaded = NO;
-    _bLoading = YES;
     
+    // we use these to check if a different value is set during the async load process
+    _loadRate =_loadPosition = _loadFrame = INFINITY;
+
     if (self.asset != nil) {
         [self.asset cancelLoading];
     }
@@ -307,6 +309,8 @@ static const void *PlayerRateContext = &ItemStatusContext;
                 [[NSNotificationCenter defaultCenter] removeObserver:self
                                                                 name:AVPlayerItemDidPlayToEndTimeNotification
                                                               object:self.playerItem];
+                
+                [self.playerItem removeObserver:self forKeyPath:@"status"];
             }
             
             //	make a player item
@@ -324,8 +328,8 @@ static const void *PlayerRateContext = &ItemStatusContext;
             _videoWidth = [videoTrack naturalSize].width;
             _videoHeight = [videoTrack naturalSize].height;
             _totalFrames = floor((float)CMTimeGetSeconds(_duration) * _frameRate);
-            _minFrameDuration = videoTrack.minFrameDuration;
-            _rate = 1.0; // reset rate to normal forward playback
+            //_minFrameDuration = videoTrack.minFrameDuration;
+            _rate = 0.0; // reset rate to not autoplay
             
             // extract codec subtype
             OSType fourcc;
@@ -398,6 +402,7 @@ static const void *PlayerRateContext = &ItemStatusContext;
                 if(_player != nil) {
                     //[self removeTimeObserverFromPlayer];
                     //[self.player removeObserver:self forKeyPath:kRateKey context:&PlayerRateContext];
+                    [_player cancelPendingPrerolls];
                     self.player = nil;
                     [_player release];
                 }
@@ -413,21 +418,13 @@ static const void *PlayerRateContext = &ItemStatusContext;
                 //	tell the player to start playing the new player item
                 [self.player performSelectorOnMainThread:@selector(replaceCurrentItemWithPlayerItem:) withObject:self.playerItem waitUntilDone:NO]; // change this to NO to make it really non-block!!????
             
-                // loaded
-                _bLoaded = YES;
-                _bLoading = NO;
-                _bFrameNeedsRender = NO;
+                [self.playerItem addObserver:self
+                                  forKeyPath:@"status"
+                                     options:(NSKeyValueObservingOptions)0
+                                     context:ItemStatusContext];
                 
                 [asyncLock unlock];
                 
-                [self.player seekToTime:kCMTimeZero];
-                [self.player setRate:_rate];
-//                [self.player prerollAtRate:1.0 completionHandler:^(BOOL finished){
-//                    if (finished) {
-//                        
-//                        //[self.player play];
-//                    }
-//                }];
             }
             
         }];
@@ -438,13 +435,91 @@ static const void *PlayerRateContext = &ItemStatusContext;
     
 }
 
+- (void)observeValueForKeyPath:(NSString*)keyPath ofObject:(id)object change:(NSDictionary*)change context:(void*)context
+{
+    if (context == ItemStatusContext) {
+        AVPlayerItem* player_item = (AVPlayerItem*)object;
+        AVPlayerItemStatus status = [player_item status];
+        switch (status) {
+            case AVPlayerItemStatusUnknown:
+                
+                break;
+            case AVPlayerItemStatusReadyToPlay:
+                [asyncLock lock];
+                
+                _bLoaded = YES;
+                _bFrameNeedsRender = NO;
+                
+                [asyncLock unlock];
+                
+                if(_loadPosition != INFINITY){
+                    [self setPosition:_loadPosition];
+                }else{
+                    if(_loadFrame != INFINITY){
+                        [self setFrame:_loadFrame];
+                    }else{
+                        [self.player seekToTime:kCMTimeZero]; // load from frame 0
+                    }
+                }
+                
+                if(_loadRate != INFINITY){
+                    [self setSpeed:_loadRate];
+                }else{
+                    [self.player setRate:_rate]; // load paused?
+                }
+//                [self.player prerollAtRate:1.0 completionHandler:^(BOOL finished){
+//                    if (finished) {
+//                        
+//                        [asyncLock lock];
+//                        
+//                        _bLoaded = YES;
+//                        _bFrameNeedsRender = NO;
+//
+//                        [asyncLock unlock];
+//                        
+//                        if(_loadPosition != INFINITY){
+//                            [self setPosition:_loadPosition];
+//                        }else{
+//                            if(_loadFrame != INFINITY){
+//                                [self setFrame:_loadFrame];
+//                            }else{
+//                                [self.player seekToTime:kCMTimeZero]; // load from frame 0
+//                            }
+//                        }
+//
+//                        if(_loadRate != INFINITY){
+//                            [self setSpeed:_loadRate];
+//                        }else{
+//                            [self.player setRate:_rate]; // load paused?
+//                        }
+//                        
+//                        
+//                    }
+//                }];
+//                NSLog(@"PlayerItem status ready to play");
+                break;
+            case AVPlayerItemStatusFailed:
+                _bLoaded = NO;
+                NSLog(@"PlayerItem status failed");
+                break;
+        }
+    }
+    else {
+        [super observeValueForKeyPath:keyPath ofObject:object change:change context:context];
+    }
+}
+
 - (void) itemDidPlayToEnd:(NSNotification *)note {
     [self.player seekToTime:kCMTimeZero];
     [self.player setRate:_rate];
 }
 
 - (void) play{
-    [self.player setRate:_rate];
+    if(!_bLoaded){
+        _loadRate = 1.0f;
+    }else{
+        [self.player setRate:_rate];
+    }
 }
 
 - (void) stop{
@@ -460,28 +535,45 @@ static const void *PlayerRateContext = &ItemStatusContext;
 }
 
 - (void) setSpeed:(float)speed{
-    _rate = speed;
-    [self.player setRate:_rate];
+    if(!_bLoaded){
+        _loadRate = speed;
+    }else{
+        _rate = speed;
+        [self.player setRate:_rate];
+    }
 }
 
 - (void)setPosition:(float)position {
-    CMTime time = CMTimeMakeWithSeconds(CMTimeGetSeconds(_duration) * position, NSEC_PER_SEC);
-    time = CMTimeMaximum(time, kCMTimeZero);
-    time = CMTimeMinimum(time, _duration);
-    [self.player seekToTime:time
-            toleranceBefore:kCMTimeZero
-             toleranceAfter:kCMTimeZero
-          completionHandler:^(BOOL finished)
-    {
-//            int nFrame = CMTimeGetSeconds([self.player currentTime]) * frameRate;
-//            NSLog(@"setPosComp: %d", nFrame);
-//            [self.player setRate:tRate];
-    }];
+    
+    if(!_bLoaded){
+        _loadPosition = position;
+    }else{
+        CMTime time = CMTimeMakeWithSeconds(CMTimeGetSeconds(_duration) * position, NSEC_PER_SEC);
+        time = CMTimeMaximum(time, kCMTimeZero);
+        time = CMTimeMinimum(time, _duration);
+        [self.player seekToTime:time
+                toleranceBefore:kCMTimeZero
+                 toleranceAfter:kCMTimeZero
+              completionHandler:^(BOOL finished)
+        {
+//             int nFrame = CMTimeGetSeconds([self.player currentTime]) * _frameRate;
+//             NSLog(@"setPosComp: %d", nFrame);
+        }];
+    }
+    
 }
 
 - (void)setFrame:(int)frame {
-    float position = (float)frame / (float)_totalFrames;
-    [self setPosition:position];
+
+    if(!_bLoaded){
+        NSLog(@"load frame %i", frame);
+        _loadFrame = frame;
+    }else{
+        NSLog(@"setframe %i", frame);
+        float position = (float)frame / (float)_totalFrames;
+        [self setPosition:position];
+    }
+    
 }
 
 - (int) getCurrentFrame{
@@ -502,9 +594,9 @@ static const void *PlayerRateContext = &ItemStatusContext;
     return _videoHeight;
 }
 
-- (float) getFrameRate{
+- (float) getRate{
     if(!_bLoaded) return 0;
-    return _frameRate;
+    return _rate;
 }
 
 - (int) getTotalNumFrames{
@@ -512,9 +604,14 @@ static const void *PlayerRateContext = &ItemStatusContext;
     return _totalFrames;
 }
 
-- (CMTime) getDuration{
-    if(!_bLoaded) return kCMTimeZero;
-    return _duration;
+- (float) getPosition{
+    if(!_bLoaded) return 0;
+    return (float)_currentFrame / (float)_totalFrames;
+}
+
+- (float) getDuration{
+    if(!_bLoaded) return 0;
+    return CMTimeGetSeconds(_duration);
 }
 
 - (AVPlayer*) getPlayer{

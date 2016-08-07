@@ -41,47 +41,8 @@ ofxHAPAVPlayer::~ofxHAPAVPlayer(){
 }
 
 //--------------------------------------------------------------
-void ofxHAPAVPlayer::close(){
-
-    if (delegate != nil) {
-        
-        // clear pixels
-        pixels.clear();
-        for (int i=0; i<2; ++i)	{
-            videoTextures[i].clear();
-            internalFormats[i] = 0;
-        }
-        
-        // dispose videoplayer
-        __block ofxHAPAVPlayerDelegate *currentDelegate = delegate;
-        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0), ^{
-            @autoreleasepool {
-                [currentDelegate unloadVideo]; // synchronious call to unload video
-                [currentDelegate autorelease]; // release
-            }
-        });
-
-        delegate = nil;
-        
-        if(videoTextureCache != nullptr){
-            CVOpenGLTextureCacheRelease(videoTextureCache);
-            videoTextureCache = nullptr;
-        }
-        if(videoTextureRef != nullptr){
-            CVOpenGLTextureRelease(videoTextureRef);
-            videoTextureRef = nullptr;
-        }
-        
-        
-    }
-
-    bFrameNew = false;
-    
-}
-
-//--------------------------------------------------------------
 void ofxHAPAVPlayer::load(string path){
-
+    
     @autoreleasepool {
         if(delegate == nil){
             delegate = [[ofxHAPAVPlayerDelegate alloc] init];
@@ -116,66 +77,47 @@ void ofxHAPAVPlayer::load(string path){
 }
 
 //--------------------------------------------------------------
-int	ofxHAPAVPlayer::getCurrentFrame() const{
-    return [delegate getCurrentFrame];
-}
-
-//--------------------------------------------------------------
-int	ofxHAPAVPlayer::getTotalNumFrames() const{
-    return [delegate getTotalNumFrames];
-}
-
-//--------------------------------------------------------------
-bool ofxHAPAVPlayer::isFrameNew() const{
-    return bFrameNew;
-}
-
-//--------------------------------------------------------------
-void ofxHAPAVPlayer::play(){
-    if(delegate == nil) return;
-    [delegate play];
-}
-
-//--------------------------------------------------------------
-void ofxHAPAVPlayer::stop(){
-    [delegate stop];
-}
-
-//--------------------------------------------------------------
-void ofxHAPAVPlayer::setSpeed(float speed){
-    [delegate setSpeed:speed];
-}
-
-//--------------------------------------------------------------
-void ofxHAPAVPlayer::setPaused(bool bPause){
-    [delegate setPaused:bPause];
-}
-
-//--------------------------------------------------------------
-void ofxHAPAVPlayer::setFrame(int frame){
-    [delegate setFrame:frame];
-}
-
-//--------------------------------------------------------------
-void ofxHAPAVPlayer::setPosition(float pct){
-    [delegate setPosition:pct];
-}
-
-//--------------------------------------------------------------
-float ofxHAPAVPlayer::getWidth() const{
-    if(delegate == nil) return 0;
-    return [delegate getWidth];
-}
-
-//--------------------------------------------------------------
-float ofxHAPAVPlayer::getHeight() const{
-    if(delegate == nil) return 0;
-    return [delegate getHeight];
+void ofxHAPAVPlayer::close(){
+    
+    if (delegate != nil) {
+        
+        // clear pixels
+        pixels.clear();
+        for (int i=0; i<2; ++i)	{
+            videoTextures[i].clear();
+            internalFormats[i] = 0;
+        }
+        
+        // dispose videoplayer
+        __block ofxHAPAVPlayerDelegate *currentDelegate = delegate;
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0), ^{
+            @autoreleasepool {
+                [currentDelegate unloadVideo]; // synchronious call to unload video
+                [currentDelegate autorelease]; // release
+            }
+        });
+        
+        delegate = nil;
+        
+        if(videoTextureCache != nullptr){
+            CVOpenGLTextureCacheRelease(videoTextureCache);
+            videoTextureCache = nullptr;
+        }
+        if(videoTextureRef != nullptr){
+            CVOpenGLTextureRelease(videoTextureRef);
+            videoTextureRef = nullptr;
+        }
+        
+        
+    }
+    
+    bFrameNew = false;
+    
 }
 
 //--------------------------------------------------------------
 void ofxHAPAVPlayer::update(){
-
+    
     if(delegate == nil) return;
     if(![delegate isLoaded]) return;
     
@@ -433,6 +375,49 @@ void ofxHAPAVPlayer::draw(float x, float y, float w, float h){
     ofPopMatrix();
 }
 
+////--------------------------------------------------------------
+//bool ofxHAPAVPlayer::setPixelFormat(ofPixelFormat pixelFormat){
+//    
+//}
+//
+////--------------------------------------------------------------
+//ofPixelFormat ofxHAPAVPlayer::getPixelFormat() const{
+//    
+//}
+
+//--------------------------------------------------------------
+void ofxHAPAVPlayer::play(){
+    if(delegate == nil) return;
+    [delegate play];
+}
+
+//--------------------------------------------------------------
+void ofxHAPAVPlayer::stop(){
+    if(delegate == nil) return;
+    [delegate stop];
+}
+
+//--------------------------------------------------------------
+bool ofxHAPAVPlayer::isFrameNew() const{
+    if(delegate == nil) return false;
+    return bFrameNew;
+}
+
+////--------------------------------------------------------------
+//void ofxHAPAVPlayer::setUsePixels(bool bUsePixels){
+//    
+//}
+//
+////--------------------------------------------------------------
+//const ofxHAPAVPlayer::ofPixels & getPixels() const{
+//    
+//}
+//
+////--------------------------------------------------------------
+//ofPixels & ofxHAPAVPlayer::getPixels(){
+//    
+//}
+
 //--------------------------------------------------------------
 ofTexture * ofxHAPAVPlayer::getTexturePtr(){
     return &videoTextures[0];
@@ -447,3 +432,126 @@ ofTexture &	ofxHAPAVPlayer::getTexture(){
 const ofTexture & ofxHAPAVPlayer::getTexture() const{
     return videoTextures[0];
 }
+
+//--------------------------------------------------------------
+float ofxHAPAVPlayer::getWidth() const{
+    if(delegate == nil) return 0;
+    return [delegate getWidth];
+}
+
+//--------------------------------------------------------------
+float ofxHAPAVPlayer::getHeight() const{
+    if(delegate == nil) return 0;
+    return [delegate getHeight];
+}
+
+//--------------------------------------------------------------
+bool ofxHAPAVPlayer::isPaused() const{
+    if(delegate == nil) return true;
+    return [delegate getRate] == 0.0f;
+}
+
+//--------------------------------------------------------------
+bool ofxHAPAVPlayer::isLoaded() const{
+    if(delegate == nil) return false;
+    return [delegate isLoaded];
+}
+
+//--------------------------------------------------------------
+bool ofxHAPAVPlayer::isPlaying() const{
+    return !isPaused();
+}
+
+//--------------------------------------------------------------
+float ofxHAPAVPlayer::getPosition() const{
+    if(delegate == nil) return 0;
+    return [delegate getPosition];
+}
+
+////--------------------------------------------------------------
+//float ofxHAPAVPlayer::getVolume() const{
+//    
+//}
+
+//--------------------------------------------------------------
+float ofxHAPAVPlayer::getSpeed() const{
+    if(delegate == nil) return 0;
+    return [delegate getRate];
+}
+
+//--------------------------------------------------------------
+float ofxHAPAVPlayer::getDuration() const{
+    if(delegate == nil) return 0;
+    return [delegate getDuration];
+}
+
+////--------------------------------------------------------------
+//bool ofxHAPAVPlayer::getIsMovieDone() const{
+//    
+//}
+
+//--------------------------------------------------------------
+void ofxHAPAVPlayer::setPaused(bool bPause){
+    if(delegate == nil) return;
+    [delegate setPaused:bPause];
+}
+
+//--------------------------------------------------------------
+void ofxHAPAVPlayer::setPosition(float pct){
+    if(delegate == nil) return;
+    [delegate setPosition:pct];
+}
+
+////--------------------------------------------------------------
+//void ofxHAPAVPlayer::setVolume(float volume){
+//    
+//}
+//
+////--------------------------------------------------------------
+//void ofxHAPAVPlayer::setLoopState(ofLoopType state){
+//    
+//}
+
+//--------------------------------------------------------------
+void ofxHAPAVPlayer::setSpeed(float speed){
+    if(delegate == nil) return;
+    [delegate setSpeed:speed];
+}
+
+//--------------------------------------------------------------
+void ofxHAPAVPlayer::setFrame(int frame){
+    if(delegate == nil) return;
+    [delegate setFrame:frame];
+}
+
+//--------------------------------------------------------------
+int	ofxHAPAVPlayer::getCurrentFrame() const{
+    if(delegate == nil) return 0;
+    return [delegate getCurrentFrame];
+}
+
+//--------------------------------------------------------------
+int	ofxHAPAVPlayer::getTotalNumFrames() const{
+    if(delegate == nil) return 0;
+    return [delegate getTotalNumFrames];
+}
+
+////--------------------------------------------------------------
+//ofLoopType ofxHAPAVPlayer::getLoopState() const{
+//    
+//}
+
+//--------------------------------------------------------------
+void ofxHAPAVPlayer::firstFrame(){
+    setFrame(0);
+}
+
+////--------------------------------------------------------------
+//void ofxHAPAVPlayer::nextFrame(){
+//    
+//}
+//
+////--------------------------------------------------------------
+//void ofxHAPAVPlayer::previousFrame(){
+//    
+//}

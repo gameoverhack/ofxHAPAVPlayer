@@ -32,7 +32,11 @@ void ofApp::draw(){
     vidPtr->draw(640, 0);
     ostringstream os;
     os << "FPS: " << ofGetFrameRate() << endl;
-    os << "Frame/Total: " << vid.getCurrentFrame() << " / " << vid.getTotalNumFrames() << " " << vidPtr->getCurrentFrame() << " / " << vidPtr->getTotalNumFrames() << endl;
+    os << "Frame/Total: "   << vid.getCurrentFrame() << " / " << vid.getTotalNumFrames() << " "
+                            //<< vid.getPosition() << " / " << vid.getDuration() << " "
+                            << vidPtr->getCurrentFrame() << " / " << vidPtr->getTotalNumFrames() << " "
+                            //<< vidPtr->getPosition() << " / " << vidPtr->getDuration() << " "
+                            << endl;
     os << "Press ' ' (SpaceBar) to load movies at random" << endl;
     os << "Press 'r' to toggle auto load movies at random" << endl;
     os << "Press 'd' to toggle testing destructor/constructor loading" << endl;
@@ -62,7 +66,7 @@ void ofApp::keyReleased(int key){
                 vidPtr->setSpeed(3.0);
             }
             
-            //cout << dir.getPath(currentFileIndex) << endl;
+            cout << dir.getPath(currentFileIndex) << endl;
             
         }
             break;

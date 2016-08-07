@@ -29,16 +29,24 @@
     
     NSInteger _videoWidth;
     NSInteger _videoHeight;
+    
+    float _loadRate;
+    float _loadPosition;
+    float _loadFrame;
+    
     float _rate;
     float _frameRate;
+    
     int _currentFrame;
     int _totalFrames;
+    
     CMTime _duration;
-    CMTime _minFrameDuration;
+    
     BOOL _bLoaded;
-    BOOL _bLoading;
     BOOL _bFrameNeedsRender;
     BOOL _bHAPEncoded;
+    
+    //CMTime _minFrameDuration;
     
 }
 
@@ -60,12 +68,11 @@
 
 - (NSInteger) getWidth;
 - (NSInteger) getHeight;
-
+- (float) getRate;
 - (int) getCurrentFrame;
-- (void) setCurrentFrame:(CMTime)frameTime;
-- (float) getFrameRate;
 - (int) getTotalNumFrames;
-- (CMTime) getDuration;
+- (float) getPosition;
+- (float) getDuration;
 - (BOOL) isLoaded;
 
 - (CVImageBufferRef) getAVFDecodedFrame;
