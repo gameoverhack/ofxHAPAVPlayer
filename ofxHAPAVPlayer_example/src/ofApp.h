@@ -22,6 +22,7 @@ public:
     void dragEvent(ofDragInfo dragInfo);
     void gotMessage(ofMessage msg);
     
+    bool bLoadRandom;
     bool bTestDtor;
     
     int currentFileIndex;

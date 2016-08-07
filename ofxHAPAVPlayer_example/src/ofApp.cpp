@@ -7,6 +7,7 @@ void ofApp::setup(){
     dir.listDir(ofToDataPath(""));
     currentFileIndex = 0;
     
+    bLoadRandom = true;
     bTestDtor = false;
     
     vid.load(dir.getPath(currentFileIndex));
@@ -15,13 +16,14 @@ void ofApp::setup(){
     vidPtr = shared_ptr<ofxHAPAVPlayer>(new ofxHAPAVPlayer);
     vidPtr->load(dir.getPath(currentFileIndex));
     vidPtr->play();
+    vidPtr->setSpeed(3.0);
 }
 
 //--------------------------------------------------------------
 void ofApp::update(){
     vid.update();
     vidPtr->update();
-    if(ofGetFrameNum() % 20 == 0) keyReleased(' ');
+    if(ofGetFrameNum() % 20 == 0 && bLoadRandom) keyReleased(' ');
 }
 
 //--------------------------------------------------------------
@@ -30,9 +32,12 @@ void ofApp::draw(){
     vidPtr->draw(640, 0);
     ostringstream os;
     os << "FPS: " << ofGetFrameRate() << endl;
-    os << "Frame/Duration: " << vid.getCurrentFrame() << " / " << vid.getTotalNumFrames() << endl;
+    os << "Frame/Total: " << vid.getCurrentFrame() << " / " << vid.getTotalNumFrames() << " " << vidPtr->getCurrentFrame() << " / " << vidPtr->getTotalNumFrames() << endl;
     os << "Press ' ' (SpaceBar) to load movies at random" << endl;
-    ofDrawBitmapString(os.str(), 20, ofGetHeight() - 50);
+    os << "Press 'r' to toggle auto load movies at random" << endl;
+    os << "Press 'd' to toggle testing destructor/constructor loading" << endl;
+    
+    ofDrawBitmapString(os.str(), 20, ofGetHeight() - 80);
 }
 
 //--------------------------------------------------------------
@@ -54,17 +59,16 @@ void ofApp::keyReleased(int key){
                 vidPtr = shared_ptr<ofxHAPAVPlayer>(new ofxHAPAVPlayer);
                 vidPtr->load(dir.getPath(currentFileIndex));
                 vidPtr->play();
+                vidPtr->setSpeed(3.0);
             }
             
             //cout << dir.getPath(currentFileIndex) << endl;
             
         }
             break;
-        case 'z':
+        case 'r':
         {
-            vidPtr = shared_ptr<ofxHAPAVPlayer>(new ofxHAPAVPlayer);
-            vidPtr->load(dir.getPath(currentFileIndex));
-            vidPtr->play();
+            bLoadRandom = !bLoadRandom;
         }
             break;
         case 'd':

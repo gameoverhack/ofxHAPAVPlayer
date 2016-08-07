@@ -257,8 +257,8 @@ static const void *PlayerRateContext = &ItemStatusContext;
 
 - (void) load:(NSString *)path{
 
-    _bLoaded = false;
-    _bLoading = true;
+    _bLoaded = NO;
+    _bLoading = YES;
     
     if (self.asset != nil) {
         [self.asset cancelLoading];
@@ -287,20 +287,20 @@ static const void *PlayerRateContext = &ItemStatusContext;
             
             if(status != AVKeyValueStatusLoaded) {
                 NSLog(@"error loading asset tracks: %@", [error localizedDescription]);
-                _bLoaded = false;
+                _bLoaded = NO;
                 return;
             }
 
             if(CMTimeCompare(_duration, kCMTimeZero) == 0) {
                 NSLog(@"track loaded with zero duration.");
-                _bLoaded = false;
+                _bLoaded = NO;
                 return;
             }
             
             NSArray * videoTracks = [self.asset tracksWithMediaType:AVMediaTypeVideo];
             if([videoTracks count] == 0) {
                 NSLog(@"no video tracks found.");
-                _bLoaded = false;;
+                _bLoaded = NO;;
                 return;
             }
             
@@ -401,6 +401,16 @@ static const void *PlayerRateContext = &ItemStatusContext;
                         break;
                 }
                 
+                // epic leak chase comes down to this:
+                if(_player != nil) {
+                    //[self removeTimeObserverFromPlayer];
+                    //[self.player removeObserver:self forKeyPath:kRateKey context:&PlayerRateContext];
+                    self.player = nil;
+                    [_player release];
+                }
+                
+                _player = [[AVPlayer alloc] init];
+                
                 //register to receive notifications that the new player item has played to its end
                 [[NSNotificationCenter defaultCenter] addObserver:self
                                                          selector:@selector(itemDidPlayToEnd:)
@@ -408,11 +418,7 @@ static const void *PlayerRateContext = &ItemStatusContext;
                                                            object:self.playerItem];
 
                 //	tell the player to start playing the new player item
-                if ([NSThread isMainThread]){
-                    [self.player replaceCurrentItemWithPlayerItem:self.playerItem];
-                }else{
-                    [self.player performSelectorOnMainThread:@selector(replaceCurrentItemWithPlayerItem:) withObject:self.playerItem waitUntilDone:NO]; // change this to NO to make it really non-block!!????
-                }
+                [self.player performSelectorOnMainThread:@selector(replaceCurrentItemWithPlayerItem:) withObject:self.playerItem waitUntilDone:NO]; // change this to NO to make it really non-block!!????
             
                 // loaded
                 _bLoaded = YES;
@@ -422,7 +428,13 @@ static const void *PlayerRateContext = &ItemStatusContext;
                 [asyncLock unlock];
                 
                 [self.player seekToTime:kCMTimeZero];
-                [self.player setRate:1.0f];
+                [self.player setRate:_rate];
+//                [self.player prerollAtRate:1.0 completionHandler:^(BOOL finished){
+//                    if (finished) {
+//                        
+//                        //[self.player play];
+//                    }
+//                }];
             }
             
         }];

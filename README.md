@@ -14,7 +14,8 @@ This addon was originally initiated by Joshua Batty: https://github.com/JoshuaBa
 
 Known issues:
 
-* Memory leak when creating and destroying instances of ofxHAPAVPlayer - might be related to this oF issue https://github.com/openframeworks/openFrameworks/issues/4414. However memory is stable memory when re-using/reloading an instance.
+* When running applications with instances of ofxHAPAVPlayer inside XCode both Activity Monitor and XCode report memory increasing on (re)loading and construction/destruction. This appears to be a bug in Xcode as applications run outside of Xcode do not have this 'psuedo' memory leak. eg., try running the examples inside Xcode and then run them just as an application outside of Xcode.
+* Currently play, setFrame and setSpeed are not accounting for the asynchronous nature of the loading of videos so they are not responding correctly to changes made before the video has loaded.
 * Seeking to an exact frame may fail depending on video/codec. This means that stepping through frame-by-frame on a paused video will most likely not work. But seeking to a frame on a playing video is fine - it just might not go to *exactly* the frame you request.
 
 ofxHAPAVPlayer can be added to your project by using the project generator.
