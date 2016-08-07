@@ -12,7 +12,7 @@ void ofApp::setup(){
     vid.setSpeed(1.0);
     
     dir.allowExt("mov");
-    dir.listDir(""); //ofToDataPath("/Users/gameover/Desktop/LAF/hap")
+    dir.listDir(ofToDataPath("/Users/gameover/Desktop/LAF/hap")); //ofToDataPath("/Users/gameover/Desktop/LAF/hap")
 
     maxPlayers = 220;
     videos.resize(maxPlayers);

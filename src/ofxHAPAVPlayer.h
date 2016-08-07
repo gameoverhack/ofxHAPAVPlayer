@@ -83,7 +83,8 @@ public:
     void nextFrame();
     void previousFrame();
     
-//    ofxHAPAVPlayer& operator=(ofxHAPAVPlayer other);
+    string getMovieName();
+    string getMoviePath();
     
 protected:
     
@@ -109,6 +110,12 @@ protected:
     CVOpenGLTextureCacheRef     videoTextureCache = nullptr;
     CVOpenGLTextureRef          videoTextureRef = nullptr;
     
+private:
+    
+    // block copy ctor and assignment operator
+//    ofxHAPAVPlayer(const ofxHAPAVPlayer& other);
+//    ofxHAPAVPlayer& operator=(const ofxHAPAVPlayer&);
+    //ofxHAPAVPlayer& operator=(ofxHAPAVPlayer other);
 };
 
 #endif

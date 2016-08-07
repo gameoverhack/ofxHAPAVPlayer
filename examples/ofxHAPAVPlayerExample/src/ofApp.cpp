@@ -16,8 +16,8 @@ void ofApp::setup(){
     vidPtr = shared_ptr<ofxHAPAVPlayer>(new ofxHAPAVPlayer);
     vidPtr->load(dir.getPath(currentFileIndex));
     vidPtr->play();
-    vidPtr->setPosition(0.5);
-    vidPtr->setSpeed(3.0);
+    vidPtr->setFrame(0);
+    vidPtr->setSpeed(0.0);
     vidPtr->setLoopState(OF_LOOP_PALINDROME);
 }
 
@@ -122,6 +122,14 @@ void ofApp::keyReleased(int key){
         {
             vid.setSpeed(-2.0);
         }
+            break;
+        case OF_KEY_LEFT:
+            if(vidPtr->getSpeed() != 0) vidPtr->setSpeed(0);
+            vidPtr->previousFrame();
+            break;
+        case OF_KEY_RIGHT:
+            if(vidPtr->getSpeed() != 0) vidPtr->setSpeed(0);
+            vidPtr->nextFrame();
             break;
         default:
             break;

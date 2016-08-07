@@ -453,6 +453,11 @@ static void *ItemStatusContext = &ItemStatusContext;
                 
                 [asyncLock unlock];
                 
+                // this hack forces a frame into the render pipeline :(
+//                [self stepForward];
+//                [self stepBackward];
+//                [self renderCallback];
+                
                 if(_loadPosition != INFINITY){
                     [self setPosition:_loadPosition];
                 }else{
@@ -468,6 +473,7 @@ static void *ItemStatusContext = &ItemStatusContext;
                 }else{
                     [self.player setRate:_rate]; // load paused?
                 }
+                
                 
                 // preroll doesn't seem to work on native avf video output ?????
 //                [self.player prerollAtRate:1.0 completionHandler:^(BOOL finished){
@@ -540,7 +546,6 @@ static void *ItemStatusContext = &ItemStatusContext;
     
 }
 
-
 - (void) play{
     if(!_bLoaded){
         _loadRate = 1.0f;
@@ -599,6 +604,50 @@ static void *ItemStatusContext = &ItemStatusContext;
         [self setPosition:position];
     }
     
+}
+
+- (void) stepForward{
+    int tFrame = _currentFrame + 1;
+    if(tFrame > _totalFrames) return;
+    float position = (float)tFrame / (float)_totalFrames;
+    CMTime time = CMTimeMakeWithSeconds(CMTimeGetSeconds(_duration) * position, NSEC_PER_SEC);
+    time = CMTimeMaximum(time, kCMTimeZero);
+    time = CMTimeMinimum(time, _duration);
+    [self.player seekToTime:time
+            toleranceBefore:kCMTimeZero
+             toleranceAfter:kCMTimeZero
+          completionHandler:^(BOOL finished)
+     {
+         if(_currentFrame != tFrame){
+             if(_currentFrame + 1 < _totalFrames){
+                 _currentFrame++;
+                 NSLog(@"Warning: could not seek to frame: %i - trying to seek to: %i", tFrame,  tFrame + 1);
+                 [self stepForward];
+             }
+         }
+     }];
+}
+
+- (void) stepBackward{
+    int tFrame = _currentFrame - 1;
+    if(tFrame < 0) return;
+    float position = (float)tFrame / (float)_totalFrames;
+    CMTime time = CMTimeMakeWithSeconds(CMTimeGetSeconds(_duration) * position, NSEC_PER_SEC);
+    time = CMTimeMaximum(time, kCMTimeZero);
+    time = CMTimeMinimum(time, _duration);
+    [self.player seekToTime:time
+            toleranceBefore:kCMTimeZero
+             toleranceAfter:kCMTimeZero
+          completionHandler:^(BOOL finished)
+     {
+         if(_currentFrame != tFrame){
+             if(_currentFrame - 1 >= 0){
+                 _currentFrame--;
+                 NSLog(@"Warning: could not seek to frame: %i - trying to seek to: %i", tFrame,  tFrame - 1);
+                 [self stepBackward];
+             }
+         }
+     }];
 }
 
 - (int) getCurrentFrame{

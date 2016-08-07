@@ -73,6 +73,8 @@ typedef enum{
 - (void) setSpeed:(float)speed;
 - (void) setPosition:(float)position;
 - (void) setFrame:(int)frame;
+- (void) stepForward;
+- (void) stepBackward;
 - (void) setLoopType:(LoopType)state;
 - (LoopType) getLoopType;
 

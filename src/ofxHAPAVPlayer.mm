@@ -551,12 +551,24 @@ void ofxHAPAVPlayer::firstFrame(){
     setFrame(0);
 }
 
+//--------------------------------------------------------------
+void ofxHAPAVPlayer::nextFrame(){
+    if(delegate == nil) return;
+    [delegate stepForward];
+}
+
+//--------------------------------------------------------------
+void ofxHAPAVPlayer::previousFrame(){
+    if(delegate == nil) return;
+    [delegate stepBackward];
+}
+
 ////--------------------------------------------------------------
-//void ofxHAPAVPlayer::nextFrame(){
+//string ofxHAPAVPlayer::getMovieName(){
 //    
 //}
 //
 ////--------------------------------------------------------------
-//void ofxHAPAVPlayer::previousFrame(){
+//string ofxHAPAVPlayer::getMoviePath(){
 //    
 //}
