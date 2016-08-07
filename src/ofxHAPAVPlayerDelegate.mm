@@ -291,6 +291,8 @@ static const void *PlayerRateContext = &ItemStatusContext;
                 return;
             }
 
+            _duration = [self.asset duration];
+            
             if(CMTimeCompare(_duration, kCMTimeZero) == 0) {
                 NSLog(@"track loaded with zero duration.");
                 _bLoaded = NO;
@@ -326,7 +328,6 @@ static const void *PlayerRateContext = &ItemStatusContext;
             // get info from track (assume just one video track at position 0 - is this wise?
             // otherwise use: for (AVAssetTrack *trackPtr in videoTracks) etc....
             AVAssetTrack * videoTrack = videoTracks.firstObject;
-            _duration = [self.asset duration];
             _frameRate = videoTrack.nominalFrameRate;
             _videoWidth = [videoTrack naturalSize].width;
             _videoHeight = [videoTrack naturalSize].height;
