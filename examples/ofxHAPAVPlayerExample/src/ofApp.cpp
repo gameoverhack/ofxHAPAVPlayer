@@ -16,8 +16,8 @@ void ofApp::setup(){
     vidPtr = shared_ptr<ofxHAPAVPlayer>(new ofxHAPAVPlayer);
     vidPtr->load(dir.getPath(currentFileIndex));
     vidPtr->play();
-    vidPtr->setFrame(0);
-    vidPtr->setSpeed(0.0);
+    vidPtr->setPosition(0.5);
+    vidPtr->setSpeed(3.0);
     vidPtr->setLoopState(OF_LOOP_PALINDROME);
 }
 

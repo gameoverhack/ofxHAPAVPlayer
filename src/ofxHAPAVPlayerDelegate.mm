@@ -453,10 +453,13 @@ static void *ItemStatusContext = &ItemStatusContext;
                 
                 [asyncLock unlock];
                 
-                // this hack forces a frame into the render pipeline :(
-//                [self stepForward];
-//                [self stepBackward];
-//                [self renderCallback];
+                // this nasty hack gets me pixels
+//                if([self.playerItem canStepForward] && [self.playerItem canStepBackward]){
+//                    [self.playerItem stepByCount:1];
+//                    [self.playerItem stepByCount:-1];
+//                    [self renderCallback];
+//                }
+                
                 
                 if(_loadPosition != INFINITY){
                     [self setPosition:_loadPosition];
@@ -733,7 +736,7 @@ static void *ItemStatusContext = &ItemStatusContext;
         if(_dedcodedFrame != nil){
             _bFrameNeedsRender = YES;
         }else{
-            _bFrameNeedsRender = NO;
+            //_bFrameNeedsRender = NO;
         }
         [dxtFrame release];
     }
