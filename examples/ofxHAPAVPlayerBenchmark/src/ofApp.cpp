@@ -12,23 +12,14 @@ void ofApp::setup(){
     vid.setSpeed(1.0);
     
     dir.allowExt("mov");
-    dir.listDir(ofToDataPath("/Users/gameover/Desktop/LAF/hap")); //ofToDataPath("/Users/gameover/Desktop/LAF/hap")
+    dir.listDir("");
 
     maxPlayers = 220;
     videos.resize(maxPlayers);
     
     numLoaded = 0;
     
-//    for(int i = 0; i < maxPlayers; i++){
-//
-//        videos[i].load(dir.getPath((int)ofRandom(dir.size())));
-//        videos[i].play();
-//        videos[i].setSpeed(3.0);
-//        ofSleepMillis(5);
-//        
-//    }
-    
-    bRandomize = false;
+    bRandomize = true;
     
 }
 
