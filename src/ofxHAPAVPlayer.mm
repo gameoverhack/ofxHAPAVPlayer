@@ -32,7 +32,7 @@ gl_FragColor = rgba;\
 
 //--------------------------------------------------------------
 ofxHAPAVPlayer::ofxHAPAVPlayer(){
-
+    
 }
 
 //--------------------------------------------------------------
@@ -46,10 +46,15 @@ void ofxHAPAVPlayer::load(string path){
     @autoreleasepool {
         if(delegate == nil){
             delegate = [[ofxHAPAVPlayerDelegate alloc] init];
-            //[delegate setParent:this];
+            
+            ofPixels p;
+            p.allocate(1, 1, OF_IMAGE_COLOR_ALPHA);
+            p[0] = p[1] = p[2] = p[3] = 0;
+            
             for (int i=0; i<2; ++i)	{
                 videoTextures[i].clear();
-                videoTextures[0].allocate(1, 1, GL_RGBA);
+                videoTextures[i].allocate(1, 1, GL_RGBA);
+                videoTextures[i].loadData(p.getData(), 1, 1, GL_RGBA); // get some black pixel in there
                 internalFormats[i] = 0;
             }
             bNeedsShader = false;
@@ -143,7 +148,7 @@ void ofxHAPAVPlayer::update(){
                 GLuint roundedWidth = tmpSize.width;
                 GLuint roundedHeight = tmpSize.height;
                 if (roundedWidth % 4 != 0 || roundedHeight % 4 != 0)	{
-                    NSLog(@"\t\terr: width isn't a multiple of 4, bailing. %s",__func__);
+                    ofLogError() << "Width isn't a multiple of 4, bailing: " << __func__;
                     return;
                 }
                 
@@ -198,7 +203,7 @@ void ofxHAPAVPlayer::update(){
                             break;
                         default:
                             // we don't support non-DXT pixel buffers
-                            NSLog(@"\t\terr: unrecognized pixel format (%X) at index %d in %s",dxtPixelFormats[texIndex],texIndex,__func__);
+                            ofLogError() << "Unrecognized pixel format " << dxtPixelFormats[texIndex] << " at index " << texIndex << " in " << __func__;
                             FourCCLog(@"\t\tpixel format fourcc is",dxtPixelFormats[texIndex]);
                             
                             return;
@@ -236,20 +241,24 @@ void ofxHAPAVPlayer::update(){
                         //                roundedWidth > backingWidths[texIndex] ||
                         //                roundedHeight > backingHeights[texIndex] ||
                         newInternalFormat != internalFormats[texIndex]){
-                        ofLogVerbose() << "Allocating texture: " << texIndex << " at " << width << " x " << height;
+                        if(roundedWidth != width || roundedHeight != height){
+                            ofLogVerbose() << "Video dimension is not multiple of 4 so texture is different size to width and height...";
+                            // ... but we handle it automagically... ;)
+                        }
+                        ofLogVerbose() << "Allocating texture: " << texIndex << " at " << roundedWidth << " x " << roundedHeight;
                         
                         int textureFormatType;
                         int texturePixelType;
                         
                         ofTextureData texData;
-                        texData.width = width;
-                        texData.height = height;
+                        texData.width = roundedWidth;
+                        texData.height = roundedHeight;
                         texData.textureTarget = GL_TEXTURE_2D;
                         internalFormats[texIndex] = newInternalFormat;
                         
                         textureFormatType = GL_BGRA;
                         texturePixelType = GL_UNSIGNED_INT_8_8_8_8_REV;
-                        ofSetPixelStoreiAlignment(GL_UNPACK_ALIGNMENT,width,1,4);
+                        ofSetPixelStoreiAlignment(GL_UNPACK_ALIGNMENT,roundedWidth,1,4);
                         texData.glInternalFormat = internalFormats[texIndex];
                         videoTextures[texIndex].allocate(texData, textureFormatType, texturePixelType);
                         videoTextures[texIndex].bind();
@@ -257,11 +266,9 @@ void ofxHAPAVPlayer::update(){
                         videoTextures[texIndex].unbind();
                         
                     }
-                    else
-                    {
-                        ofTextureData &texData = videoTextures[texIndex].getTextureData();
-                        glBindTexture(GL_TEXTURE_2D, texData.textureID);
-                    }
+
+                    ofTextureData &texData = videoTextures[texIndex].getTextureData();
+                    glBindTexture(GL_TEXTURE_2D, texData.textureID);
                     
                     glTextureRangeAPPLE(GL_TEXTURE_2D, newDataLength, baseAddress);
                     glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
@@ -370,9 +377,9 @@ void ofxHAPAVPlayer::draw(float x, float y, float w, float h){
     if(bNeedsShader && !shader.isLoaded()) return;
     ofPushMatrix();
     ofTranslate(x, y);
-    ofScale(w / getWidth(), h / getHeight());
+    //ofScale(w / getWidth(), h / getHeight());
     if(bNeedsShader) shader.begin();
-    videoTextures[0].draw(0, 0); // for now just drawing texture [0] as I can't find an example with 2 textures!?!??
+    videoTextures[0].draw(0, 0, w, h); // for now just drawing texture [0] as I can't find an example with 2 textures!?!??
     if(bNeedsShader) shader.end();
     ofPopMatrix();
 }
@@ -457,6 +464,18 @@ bool ofxHAPAVPlayer::isPaused() const{
 bool ofxHAPAVPlayer::isLoaded() const{
     if(delegate == nil) return false;
     return [delegate isLoaded];
+}
+
+//--------------------------------------------------------------
+bool ofxHAPAVPlayer::isLoading() const{
+    if(delegate == nil) return false;
+    return [delegate isLoading];
+}
+
+//--------------------------------------------------------------
+bool ofxHAPAVPlayer::isSeeking() const{
+    if(delegate == nil) return false;
+    return [delegate isSeeking];
 }
 
 //--------------------------------------------------------------

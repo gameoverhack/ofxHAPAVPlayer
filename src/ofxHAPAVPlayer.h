@@ -60,6 +60,8 @@ public:
     
     bool isPaused() const;
     bool isLoaded() const;
+    bool isLoading() const;
+    bool isSeeking() const;
     bool isPlaying() const;
     
     float getPosition() const;

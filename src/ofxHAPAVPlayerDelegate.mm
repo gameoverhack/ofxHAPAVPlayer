@@ -44,6 +44,8 @@ static void *ItemStatusContext = &ItemStatusContext;
     
 	self = [super init];
     
+    _bLoaded = _bLoading = _bHAPEncoded = _bFrameNeedsRender = false;
+    
     asyncLock = [[NSLock alloc] init];
     
     self.player = [[AVPlayer alloc] init];
@@ -131,6 +133,8 @@ static void *ItemStatusContext = &ItemStatusContext;
 {
     
     [self stop];
+    
+    _bLoaded = _bLoading = _bHAPEncoded = _bFrameNeedsRender = false;
     
     // a reference to all the variables for the block
     __block AVAsset* currentAsset = self.asset;
@@ -250,6 +254,7 @@ static void *ItemStatusContext = &ItemStatusContext;
 - (void) load:(NSString *)path{
 
     _bLoaded = NO;
+    _bLoading = YES;
     
     // we use these to check if a different value is set during the async load process
     _loadRate =_loadPosition = _loadFrame = INFINITY;
@@ -282,6 +287,7 @@ static void *ItemStatusContext = &ItemStatusContext;
             if(status != AVKeyValueStatusLoaded) {
                 NSLog(@"error loading asset tracks: %@", [error localizedDescription]);
                 _bLoaded = NO;
+                _bLoading = NO;
                 return;
             }
 
@@ -290,13 +296,15 @@ static void *ItemStatusContext = &ItemStatusContext;
             if(CMTimeCompare(_duration, kCMTimeZero) == 0) {
                 NSLog(@"track loaded with zero duration.");
                 _bLoaded = NO;
+                _bLoading = NO;
                 return;
             }
             
             NSArray * videoTracks = [self.asset tracksWithMediaType:AVMediaTypeVideo];
             if([videoTracks count] == 0) {
                 NSLog(@"no video tracks found.");
-                _bLoaded = NO;;
+                _bLoaded = NO;
+                _bLoading = NO;
                 return;
             }
             
@@ -304,6 +312,7 @@ static void *ItemStatusContext = &ItemStatusContext;
             
             if (self.playerItem != nil){
                 [self.playerItem cancelPendingSeeks];
+                _bSeeking = NO;
                 
                 //unregister as an observer for the "old" item's play-to-end notifications
                 [[NSNotificationCenter defaultCenter] removeObserver:self
@@ -445,74 +454,52 @@ static void *ItemStatusContext = &ItemStatusContext;
                 
                 break;
             case AVPlayerItemStatusReadyToPlay:
-                
-                [asyncLock lock];
-                
-                _bLoaded = YES;
-                _bFrameNeedsRender = NO;
-                
-                [asyncLock unlock];
-                
-                // this nasty hack gets me pixels
-//                if([self.playerItem canStepForward] && [self.playerItem canStepBackward]){
-//                    [self.playerItem stepByCount:1];
-//                    [self.playerItem stepByCount:-1];
-//                    [self renderCallback];
-//                }
-                
+            {
+                float position = 0;
                 
                 if(_loadPosition != INFINITY){
-                    [self setPosition:_loadPosition];
+                    position = _loadPosition;
                 }else{
-                    if(_loadFrame != INFINITY){
-                        [self setFrame:_loadFrame];
-                    }else{
-                        [self.player seekToTime:kCMTimeZero]; // load from frame 0
-                    }
+                    if(_loadFrame == INFINITY) _loadFrame = 0;
+                    position = (float)_loadFrame / (float)_totalFrames;
+                    
                 }
+                _bSeeking = YES;
+                CMTime time = CMTimeMakeWithSeconds(CMTimeGetSeconds(_duration) * position, NSEC_PER_SEC);
+                time = CMTimeMaximum(time, kCMTimeZero);
+                time = CMTimeMinimum(time, _duration);
+                [self.player seekToTime:time
+                        toleranceBefore:kCMTimeZero
+                         toleranceAfter:kCMTimeZero
+                      completionHandler:^(BOOL finished)
+                 {
+                     [asyncLock lock];
+                     
+                     _bLoaded = YES;
+                     _bSeeking = NO;
+                     _bFrameNeedsRender = NO;
+                     _bLoading = NO;
+                     
+                     [asyncLock unlock];
+                     
+                     if(_loadRate != INFINITY){
+                         [self setSpeed:_loadRate];
+                     }else{
+                         [self.player setRate:_rate]; // load paused?
+                     }
+                 }];
                 
-                if(_loadRate != INFINITY){
-                    [self setSpeed:_loadRate];
-                }else{
-                    [self.player setRate:_rate]; // load paused?
-                }
-                
-                
-                // preroll doesn't seem to work on native avf video output ?????
-//                [self.player prerollAtRate:1.0 completionHandler:^(BOOL finished){
-//                    if (finished) {
-//                        
-//                        [asyncLock lock];
-//                        
-//                        _bLoaded = YES;
-//                        _bFrameNeedsRender = NO;
-//
-//                        [asyncLock unlock];
-//                        
-//                        if(_loadPosition != INFINITY){
-//                            [self setPosition:_loadPosition];
-//                        }else{
-//                            if(_loadFrame != INFINITY){
-//                                [self setFrame:_loadFrame];
-//                            }else{
-//                                [self.player seekToTime:kCMTimeZero]; // load from frame 0
-//                            }
-//                        }
-//
-//                        if(_loadRate != INFINITY){
-//                            [self setSpeed:_loadRate];
-//                        }else{
-//                            [self.player setRate:_rate]; // load paused?
-//                        }
-//                        
-//                        
-//                    }
-//                }];
 //                NSLog(@"PlayerItem status ready to play");
+                
+            }
                 break;
             case AVPlayerItemStatusFailed:
+            {
                 _bLoaded = NO;
+                _bFrameNeedsRender = NO;
+                _bLoading = NO;
                 NSLog(@"PlayerItem status failed");
+            }
                 break;
         }
     }
@@ -551,7 +538,7 @@ static void *ItemStatusContext = &ItemStatusContext;
 
 - (void) play{
     if(!_bLoaded){
-        _loadRate = 1.0f;
+        if(_loadRate == INFINITY) _loadRate = 1.0f;
     }else{
         [self.player setRate:_rate];
     }
@@ -583,6 +570,7 @@ static void *ItemStatusContext = &ItemStatusContext;
     if(!_bLoaded){
         _loadPosition = position;
     }else{
+        _bSeeking = YES;
         CMTime time = CMTimeMakeWithSeconds(CMTimeGetSeconds(_duration) * position, NSEC_PER_SEC);
         time = CMTimeMaximum(time, kCMTimeZero);
         time = CMTimeMinimum(time, _duration);
@@ -591,8 +579,11 @@ static void *ItemStatusContext = &ItemStatusContext;
                  toleranceAfter:kCMTimeZero
               completionHandler:^(BOOL finished)
         {
-//             int nFrame = CMTimeGetSeconds([self.player currentTime]) * _frameRate;
-//             NSLog(@"setPosComp: %d", nFrame);
+            [asyncLock lock];
+            _bSeeking = NO;
+            _bFrameNeedsRender = NO;
+            [asyncLock unlock];
+            [self.player setRate:_rate];
         }];
     }
     
@@ -707,6 +698,14 @@ static void *ItemStatusContext = &ItemStatusContext;
     return _bLoaded;
 }
 
+- (BOOL) isLoading{
+    return _bLoading;
+}
+
+- (BOOL) isSeeking{
+    return _bSeeking;
+}
+
 - (void) setLoopType:(LoopType)state{
     loopType = state;
 }
@@ -721,7 +720,7 @@ static void *ItemStatusContext = &ItemStatusContext;
     
     [asyncLock lock];
     
-    if(_bFrameNeedsRender == YES){
+    if(_bFrameNeedsRender == YES || _bLoading == YES){
         [asyncLock unlock];
         return;
     }
@@ -736,7 +735,7 @@ static void *ItemStatusContext = &ItemStatusContext;
         if(_dedcodedFrame != nil){
             _bFrameNeedsRender = YES;
         }else{
-            //_bFrameNeedsRender = NO;
+            _bFrameNeedsRender = NO;
         }
         [dxtFrame release];
     }

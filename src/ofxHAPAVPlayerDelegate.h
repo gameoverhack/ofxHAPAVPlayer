@@ -49,9 +49,10 @@ typedef enum{
     CMTime _duration;
     
     BOOL _bLoaded;
+    BOOL _bLoading;
     BOOL _bFrameNeedsRender;
     BOOL _bHAPEncoded;
-    
+    BOOL _bSeeking;
     LoopType loopType;
     
     //CMTime _minFrameDuration;
@@ -86,6 +87,8 @@ typedef enum{
 - (float) getPosition;
 - (float) getDuration;
 - (BOOL) isLoaded;
+- (BOOL) isLoading;
+- (BOOL) isSeeking;
 - (BOOL) isMovieDone;
 
 - (CVImageBufferRef) getAVFDecodedFrame;
