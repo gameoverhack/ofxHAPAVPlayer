@@ -78,7 +78,7 @@ void ofxHAPAVPlayer::load(string path){
     
     bFrameNew = false;
     
-    NSString *nsPath = [NSString stringWithCString:ofToDataPath(path).c_str() encoding:[NSString defaultCStringEncoding]];
+    NSString *nsPath = [NSString stringWithUTF8String:ofToDataPath(path).c_str()];
     [delegate load:nsPath];
     
 }
